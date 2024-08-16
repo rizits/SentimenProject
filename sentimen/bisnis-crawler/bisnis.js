@@ -56,7 +56,7 @@ var keywords = [
     'currency fluctuations', 'commodity prices', 'fiscal policy', 'debt levels',
     'liquidity conditions', 'global supply chains', 'political events', 'investors sentiments'
 ];
-var maxPages = 5000;
+var maxPages = 10000;
 function scrapeArticlesForKeywords() {
     return __awaiter(this, void 0, void 0, function () {
         var _i, keywords_1, keyword;
@@ -83,16 +83,17 @@ function scrapeArticlesForKeywords() {
 }
 function scrapeArticlesFromTagPage(keyword) {
     return __awaiter(this, void 0, void 0, function () {
-        var pageNumber, morePages, articles, url, data, $, articleElements, i, element, title, link, publishTime, fullLink, _a, content, author, error_1, error_2;
+        var pageNumber, morePages, seenLinks, articles, url, data, $, articleElements, newArticleFound, i, element, title, link, publishTime, fullLink, _a, content, author, error_1, error_2;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
                     pageNumber = 1;
                     morePages = true;
+                    seenLinks = new Set();
                     articles = [];
                     _b.label = 1;
                 case 1:
-                    if (!(morePages && pageNumber <= maxPages)) return [3 /*break*/, 12];
+                    if (!morePages) return [3 /*break*/, 12];
                     _b.label = 2;
                 case 2:
                     _b.trys.push([2, 10, , 11]);
@@ -103,10 +104,7 @@ function scrapeArticlesFromTagPage(keyword) {
                     data = (_b.sent()).data;
                     $ = cheerio.load(data);
                     articleElements = $('.artItem');
-                    if (articleElements.length === 0) {
-                        morePages = false;
-                        return [3 /*break*/, 1];
-                    }
+                    newArticleFound = false;
                     i = 0;
                     _b.label = 4;
                 case 4:
@@ -117,7 +115,14 @@ function scrapeArticlesFromTagPage(keyword) {
                     publishTime = $(element).find('.artDate').text().trim();
                     if (!(title && link)) return [3 /*break*/, 8];
                     fullLink = link.startsWith('http') ? link : "https://search.bisnis.com".concat(link);
+                    // Cek apakah artikel ini sudah pernah diproses di halaman sebelumnya
+                    if (seenLinks.has(fullLink)) {
+                        console.log("Skipping already seen article: ".concat(title));
+                        return [3 /*break*/, 8];
+                    }
                     console.log("Mengambil artikel: ".concat(title));
+                    seenLinks.add(fullLink); // Tambahkan link ke daftar yang sudah dilihat
+                    newArticleFound = true; // Menandai bahwa setidaknya ada satu artikel baru ditemukan
                     _b.label = 5;
                 case 5:
                     _b.trys.push([5, 7, , 8]);
@@ -141,7 +146,18 @@ function scrapeArticlesFromTagPage(keyword) {
                     i++;
                     return [3 /*break*/, 4];
                 case 9:
+                    // Jika tidak ada artikel baru yang ditemukan di halaman ini, hentikan loop
+                    if (!newArticleFound) {
+                        console.log("No new articles found for keyword \"".concat(keyword, "\" at page ").concat(pageNumber, ". Stopping..."));
+                        morePages = false;
+                        return [3 /*break*/, 12];
+                    }
                     pageNumber += 1;
+                    // Batasi jumlah halaman untuk setiap keyword (misalnya 5000 halaman)
+                    if (pageNumber > maxPages) {
+                        console.log("Maximum pages reached for keyword \"".concat(keyword, "\". Stopping..."));
+                        morePages = false;
+                    }
                     return [3 /*break*/, 11];
                 case 10:
                     error_2 = _b.sent();

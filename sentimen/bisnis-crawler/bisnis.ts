@@ -19,7 +19,7 @@ const keywords = [
     'currency fluctuations', 'commodity prices', 'fiscal policy', 'debt levels',
     'liquidity conditions', 'global supply chains', 'political events', 'investors sentiments'
 ];
-const maxPages = 5000;
+const maxPages = 10000;
 
 async function scrapeArticlesForKeywords() {
     for (const keyword of keywords) {
@@ -31,6 +31,7 @@ async function scrapeArticlesForKeywords() {
 async function scrapeArticlesFromTagPage(keyword: string) {
     let pageNumber = 1;
     let morePages = true;
+    const seenLinks = new Set<string>();
 
     const articles: { title: string; scrappingDate: string; articleDate: string; author: string; link: string; content: string }[] = [];
 
@@ -43,12 +44,7 @@ async function scrapeArticlesFromTagPage(keyword: string) {
             const $ = cheerio.load(data);
 
             const articleElements = $('.artItem');
-
-            if (articleElements.length === 0) {
-                console.log(`No more articles found for keyword "${keyword}" at page ${pageNumber}. Stopping...`);
-                morePages = false;
-                break;
-            }
+            let newArticleFound = false;
 
             for (let i = 0; i < articleElements.length; i++) {
                 const element = articleElements[i];
@@ -58,7 +54,16 @@ async function scrapeArticlesFromTagPage(keyword: string) {
 
                 if (title && link) {
                     const fullLink = link.startsWith('http') ? link : `https://search.bisnis.com${link}`;
+
+                    // Cek apakah artikel ini sudah pernah diproses di halaman sebelumnya
+                    if (seenLinks.has(fullLink)) {
+                        console.log(`Skipping already seen article: ${title}`);
+                        continue;
+                    }
+
                     console.log(`Mengambil artikel: ${title}`);
+                    seenLinks.add(fullLink); // Tambahkan link ke daftar yang sudah dilihat
+                    newArticleFound = true;  // Menandai bahwa setidaknya ada satu artikel baru ditemukan
 
                     try {
                         const { content, author } = await scrapeArticleContent(fullLink);
@@ -78,7 +83,20 @@ async function scrapeArticlesFromTagPage(keyword: string) {
                 }
             }
 
+            // Jika tidak ada artikel baru yang ditemukan di halaman ini, hentikan loop
+            if (!newArticleFound) {
+                console.log(`No new articles found for keyword "${keyword}" at page ${pageNumber}. Stopping...`);
+                morePages = false;
+                break;
+            }
+
             pageNumber += 1;
+
+            // Batasi jumlah halaman untuk setiap keyword (misalnya 5000 halaman)
+            if (pageNumber > maxPages) {
+                console.log(`Maximum pages reached for keyword "${keyword}". Stopping...`);
+                morePages = false;
+            }
 
         } catch (error) {
             console.error(`Error scraping Bisnis.com for keyword "${keyword}" on page ${pageNumber}: ${error}`);
