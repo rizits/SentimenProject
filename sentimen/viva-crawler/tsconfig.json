@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES2015",        // Set to ES2015 to support private identifiers (#)
+    "module": "commonjs",       // Module system (commonjs for Node.js)
+    "strict": true,             // Enable all strict type-checking options
+    "esModuleInterop": true,    // Enables interoperability between CommonJS and ES Modules
+    "skipLibCheck": true,       // Skip type checking of all declaration files (*.d.ts)
+    "forceConsistentCasingInFileNames": true,  // Ensure that file names are treated as case-sensitive
+    "lib": ["es2015", "dom"]    // Include the ES2015 standard library and DOM types
+  }
+}
