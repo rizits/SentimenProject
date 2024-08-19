@@ -42,19 +42,18 @@ var path = require("path");
 var fs = require("fs");
 var csvWriter = require("csv-writer");
 var keywords = [
-    'pinjaman pemerintah', 'surat utang', 'investor asing', 'wakaf', 'sbn ritel',
-    'surat berharga syariah negara', 'sbsn', 'pembiayaan', 'sukuk', 'hibah',
-    'surat berharga negara', 'kreditur pemerintah', 'pdn', 'ekspor', 'aset',
-    'penjamin', 'risiko kredit', 'ori', 'pasar obligasi', 'obligasi negara',
-    'inflasi', 'suku bunga', 'sun', 'jatuh tempo', 'nilai tukar', 'kepemilikan asing',
-    'yield', 'ust', 'us treasury', 'surat utang negara', 'obligasi pemerintah',
-    'obligasi ritel indonesia', 'sbn', 'kebijakan moneter', 'likuiditas pasar',
-    'imbal hasil', 'pasar global', 'rating kredit', 'sentimen pasar', 'pasar sekunder',
-    'economic growth', 'inflation rates', 'interest rates', 'monetary policy',
-    'geopolitical tensions', 'market volatility', 'risk appetite', 'safe haven demand',
-    'credit ratings', 'economic indicators', 'global trade', 'currency earnings',
-    'currency fluctuations', 'commodity prices', 'fiscal policy', 'debt levels',
-    'liquidity conditions', 'global supply chains', 'political events', 'investors sentiments'
+    'pinjaman pemerintah', 'surat utang', 'investor asing', 'sbn ritel', 'sukuk',
+    'surat berharga negara', 'kreditur pemerintah', 'ori', 'pasar obligasi',
+    'obligasi negara', 'inflasi', 'suku bunga', 'sun', 'jatuh tempo',
+    'nilai tukar', 'kepemilikan asing', 'yield', 'ust', 'us treasury',
+    'surat utang negara', 'obligasi pemerintah', 'obligasi ritel indonesia',
+    'kebijakan moneter', 'likuiditas pasar', 'imbal hasil', 'pasar global',
+    'rating kredit', 'sentimen pasar', 'pasar sekunder', 'Obligasi Negara',
+    'Surat Utang Negara', 'Pergerakan Yield', 'Analisis Sentimen', 'Yield Obligasi',
+    'Pasar Obligasi', 'Kinerja Obligasi', 'Tren Yield', 'Pengaruh Makroekonomi',
+    'Kondisi Ekonomi', 'Suku Bunga', 'Kebijakan Moneter', 'Inflasi',
+    'Pasar Keuangan', 'Volatilitas Pasar', 'Pergerakan Suku Bunga',
+    'Imbal Hasil', 'Krisis Keuangan', 'Pemerintah Indonesia', 'Sentimen Investor'
 ];
 var maxPages = 10000;
 function scrapeArticlesForKeywords() {
