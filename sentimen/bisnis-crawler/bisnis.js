@@ -42,17 +42,17 @@ var path = require("path");
 var fs = require("fs");
 var csvWriter = require("csv-writer");
 var keywords = [
-    'pinjaman pemerintah', 'surat utang', 'investor asing', 'sbn ritel', 'sukuk',
-    'surat berharga negara', 'kreditur pemerintah', 'ori', 'pasar obligasi',
-    'obligasi negara', 'inflasi', 'suku bunga', 'sun', 'jatuh tempo',
-    'nilai tukar', 'kepemilikan asing', 'yield', 'ust', 'us treasury',
-    'surat utang negara', 'obligasi pemerintah', 'obligasi ritel indonesia',
-    'kebijakan moneter', 'likuiditas pasar', 'imbal hasil', 'pasar global',
-    'rating kredit', 'sentimen pasar', 'pasar sekunder', 'Obligasi Negara',
-    'Surat Utang Negara', 'Pergerakan Yield', 'Analisis Sentimen', 'Yield Obligasi',
-    'Pasar Obligasi', 'Kinerja Obligasi', 'Tren Yield', 'Pengaruh Makroekonomi',
-    'Kondisi Ekonomi', 'Suku Bunga', 'Kebijakan Moneter', 'Inflasi',
-    'Pasar Keuangan', 'Volatilitas Pasar', 'Pergerakan Suku Bunga',
+    //'pinjaman pemerintah', 'surat utang', 'investor asing', 'sbn ritel', 'sukuk',
+    //'surat berharga negara', 'kreditur pemerintah', 'ori', 'pasar obligasi', 
+    //'obligasi negara', 'inflasi', 'suku bunga', 'sun', 'jatuh tempo', 
+    //'nilai tukar', 'kepemilikan asing', 'yield', 'ust', 'us treasury', 
+    //'surat utang negara', 'obligasi pemerintah', 'obligasi ritel indonesia', 
+    //'kebijakan moneter', 'likuiditas pasar', 'imbal hasil', 'pasar global', 
+    //'rating kredit', 'sentimen pasar', 'pasar sekunder', 'Obligasi Negara', 
+    //'Surat Utang Negara', 'Pergerakan Yield', 'Analisis Sentimen', 'Yield Obligasi', 
+    //'Pasar Obligasi', 'Kinerja Obligasi', 'Tren Yield', 'Pengaruh Makroekonomi', 
+    //'Kondisi Ekonomi', 'Suku Bunga', 'Kebijakan Moneter', 'Inflasi', 
+    //'Pasar Keuangan', 'Volatilitas Pasar', 'Pergerakan Suku Bunga', 
     'Imbal Hasil', 'Krisis Keuangan', 'Pemerintah Indonesia', 'Sentimen Investor'
 ];
 var maxPages = 10000;
@@ -120,8 +120,8 @@ function scrapeArticlesFromTagPage(keyword) {
                         return [3 /*break*/, 8];
                     }
                     console.log("Mengambil artikel: ".concat(title));
-                    seenLinks.add(fullLink); // Tambahkan link ke daftar yang sudah dilihat
-                    newArticleFound = true; // Menandai bahwa setidaknya ada satu artikel baru ditemukan
+                    seenLinks.add(fullLink); // Tambah link
+                    newArticleFound = true; // Tanda menemukan artikel baru
                     _b.label = 5;
                 case 5:
                     _b.trys.push([5, 7, , 8]);
@@ -145,14 +145,14 @@ function scrapeArticlesFromTagPage(keyword) {
                     i++;
                     return [3 /*break*/, 4];
                 case 9:
-                    // Jika tidak ada artikel baru yang ditemukan di halaman ini, hentikan loop
+                    // Stop loop saat tidak ada artikel baru yang ditemukan di halaman
                     if (!newArticleFound) {
                         console.log("No new articles found for keyword \"".concat(keyword, "\" at page ").concat(pageNumber, ". Stopping..."));
                         morePages = false;
                         return [3 /*break*/, 12];
                     }
                     pageNumber += 1;
-                    // Batasi jumlah halaman untuk setiap keyword (misalnya 5000 halaman)
+                    // Batasi jumlah halaman untuk setiap keyword
                     if (pageNumber > maxPages) {
                         console.log("Maximum pages reached for keyword \"".concat(keyword, "\". Stopping..."));
                         morePages = false;

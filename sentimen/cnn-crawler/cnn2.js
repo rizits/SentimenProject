@@ -42,20 +42,21 @@ var path = require("path");
 var fs = require("fs");
 var csvWriter = require("csv-writer");
 var keywords = [
-    'pinjaman pemerintah', 'surat utang', 'investor asing', 'sbn ritel', 'sukuk',
-    'surat berharga negara', 'kreditur pemerintah', 'ori', 'pasar obligasi',
-    'obligasi negara', 'inflasi', 'suku bunga', 'sun', 'jatuh tempo',
-    'nilai tukar', 'kepemilikan asing', 'yield', 'ust', 'us treasury',
-    'surat utang negara', 'obligasi pemerintah', 'obligasi ritel indonesia',
-    'kebijakan moneter', 'likuiditas pasar', 'imbal hasil', 'pasar global',
+    //'pinjaman pemerintah', 'surat utang', 'investor asing', 'sbn ritel', 'sukuk',
+    //'surat berharga negara', 'kreditur pemerintah', 'ori', 'pasar obligasi', 
+    //'obligasi negara', 'inflasi', 'suku bunga', 'sun', 'jatuh tempo', 
+    //'nilai tukar', 'kepemilikan asing', 'yield', 'ust', 'us treasury', 
+    //'surat utang negara', 'obligasi pemerintah', 'obligasi ritel indonesia', 
+    //'kebijakan moneter', 'likuiditas pasar', 'imbal hasil', 'pasar global',
     'rating kredit', 'sentimen pasar', 'pasar sekunder', 'Obligasi Negara',
-    'Surat Utang Negara', 'Pergerakan Yield', 'Analisis Sentimen', 'Yield Obligasi',
-    'Pasar Obligasi', 'Kinerja Obligasi', 'Tren Yield', 'Pengaruh Makroekonomi',
-    'Kondisi Ekonomi', 'Suku Bunga', 'Kebijakan Moneter', 'Inflasi',
-    'Pasar Keuangan', 'Volatilitas Pasar', 'Pergerakan Suku Bunga',
-    'Imbal Hasil', 'Krisis Keuangan', 'Pemerintah Indonesia', 'Sentimen Investor'
+    'Surat Utang Negara', 'Pergerakan Yield', 'Analisis Sentimen',
+    'Yield Obligasi', 'Pasar Obligasi', 'Kinerja Obligasi', 'Tren Yield',
+    'Pengaruh Makroekonomi', 'Kondisi Ekonomi', 'Suku Bunga',
+    'Kebijakan Moneter', 'Inflasi', 'Pasar Keuangan', 'Volatilitas Pasar',
+    'Pergerakan Suku Bunga', 'Imbal Hasil', 'Krisis Keuangan',
+    'Pemerintah Indonesia', 'Sentimen Investor'
 ];
-var maxPages = 9999;
+var maxPages = 5; // Sesuaikan sesuai kebutuhan
 function scrapeArticlesForKeywords() {
     return __awaiter(this, void 0, void 0, function () {
         var _i, keywords_1, keyword;
@@ -68,7 +69,7 @@ function scrapeArticlesForKeywords() {
                     if (!(_i < keywords_1.length)) return [3 /*break*/, 4];
                     keyword = keywords_1[_i];
                     console.log("Scraping articles for keyword: ".concat(keyword));
-                    return [4 /*yield*/, scrapeArticlesFromTagPage(keyword)];
+                    return [4 /*yield*/, scrapeArticlesFromSearchPage(keyword)];
                 case 2:
                     _a.sent();
                     _a.label = 3;
@@ -80,81 +81,90 @@ function scrapeArticlesForKeywords() {
         });
     });
 }
-function scrapeArticlesFromTagPage(keyword) {
+function scrapeArticlesFromSearchPage(keyword) {
     return __awaiter(this, void 0, void 0, function () {
-        var pageNumber, morePages, articles, url, data, $, articleElements, i, element, title, link, articleUrl, articleData, $$, content, publishTime, authorElement, author, error_1;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var pageNumber, morePages, articles, url, data, $, articleElements, _i, _a, element, $element, title, link, articleUrl, articleData, $$, content, publishTime, authorElement, author, articleError_1, error_1;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
                     pageNumber = 1;
                     morePages = true;
                     articles = [];
-                    _a.label = 1;
+                    _b.label = 1;
                 case 1:
-                    if (!(morePages && pageNumber <= maxPages)) return [3 /*break*/, 10];
-                    _a.label = 2;
+                    if (!(morePages && pageNumber <= maxPages)) return [3 /*break*/, 12];
+                    _b.label = 2;
                 case 2:
-                    _a.trys.push([2, 8, , 9]);
-                    url = "https://www.cnnindonesia.com/tag/".concat(encodeURIComponent(keyword), "/").concat(pageNumber);
+                    _b.trys.push([2, 10, , 11]);
+                    url = "https://www.cnnindonesia.com/search/?query=".concat(encodeURIComponent(keyword), "&page=").concat(pageNumber);
+                    console.log("Requesting URL: ".concat(url));
                     return [4 /*yield*/, axios_1.default.get(url)];
                 case 3:
-                    data = (_a.sent()).data;
+                    data = (_b.sent()).data;
                     $ = cheerio.load(data);
-                    articleElements = $('.flex.flex-col.gap-5 > article');
+                    articleElements = $('.grow-0.w-leftcontent.min-w-0 article');
                     if (articleElements.length === 0) {
+                        console.log('No more articles found.');
                         morePages = false;
                         return [3 /*break*/, 1];
                     }
-                    i = 0;
-                    _a.label = 4;
+                    _i = 0, _a = articleElements.toArray();
+                    _b.label = 4;
                 case 4:
-                    if (!(i < articleElements.length)) return [3 /*break*/, 7];
-                    element = articleElements[i];
-                    title = $(element).find('h2').text().trim();
-                    link = $(element).find('a').attr('href') || '';
-                    if (!(title && link)) return [3 /*break*/, 6];
-                    console.log("Mengambil artikel: ".concat(title));
+                    if (!(_i < _a.length)) return [3 /*break*/, 9];
+                    element = _a[_i];
+                    $element = $(element);
+                    title = $element.find('h2').text().trim();
+                    link = $element.find('a').attr('href') || '';
+                    if (!(title && link)) return [3 /*break*/, 8];
+                    console.log("Fetching article: ".concat(title));
                     articleUrl = link.startsWith('http') ? link : "https://www.cnnindonesia.com".concat(link);
-                    return [4 /*yield*/, axios_1.default.get(articleUrl)];
+                    _b.label = 5;
                 case 5:
-                    articleData = _a.sent();
+                    _b.trys.push([5, 7, , 8]);
+                    return [4 /*yield*/, axios_1.default.get(articleUrl)];
+                case 6:
+                    articleData = _b.sent();
                     $$ = cheerio.load(articleData.data);
-                    content = $$('.detail-text.text-cnn_black.text-sm.grow.min-w-0').text().trim();
-                    publishTime = $$('div.text-cnn_grey.text-sm.mb-4').text().trim();
-                    authorElement = $$('.detail-text.text-cnn_black.text-sm.grow.min-w-0 strong').last().text().trim();
+                    content = $$('.detail_text').text().trim();
+                    publishTime = $$('.date').text().trim();
+                    authorElement = $$('.detail_text strong').last().text().trim();
                     author = authorElement || 'Tidak Diketahui';
                     articles.push({
                         title: title,
                         scrappingDate: new Date().toISOString(),
                         articleDate: publishTime,
-                        author: author, // Menyimpan penulis di sini
+                        author: author,
                         link: articleUrl,
                         content: content
                     });
-                    _a.label = 6;
-                case 6:
-                    i++;
-                    return [3 /*break*/, 4];
+                    return [3 /*break*/, 8];
                 case 7:
-                    pageNumber += 1;
-                    return [3 /*break*/, 9];
+                    articleError_1 = _b.sent();
+                    console.error("Error fetching article at \"".concat(articleUrl, "\": ").concat(articleError_1));
+                    return [3 /*break*/, 8];
                 case 8:
-                    error_1 = _a.sent();
-                    console.error("Error scraping CNN for keyword \"".concat(keyword, "\" on page ").concat(pageNumber, ": ").concat(error_1));
-                    morePages = false;
-                    return [3 /*break*/, 9];
-                case 9: return [3 /*break*/, 1];
+                    _i++;
+                    return [3 /*break*/, 4];
+                case 9:
+                    pageNumber += 1;
+                    return [3 /*break*/, 11];
                 case 10:
+                    error_1 = _b.sent();
+                    console.error("Error scraping page ".concat(pageNumber, ": ").concat(error_1));
+                    morePages = false;
+                    return [3 /*break*/, 11];
+                case 11: return [3 /*break*/, 1];
+                case 12:
                     saveToCSV(articles, keyword);
                     return [2 /*return*/];
             }
         });
     });
 }
-// Save to csv
 function saveToCSV(articles, keyword) {
     if (articles.length === 0) {
-        console.log("Tidak ada artikel yang ditemukan untuk kata kunci \"".concat(keyword, "\"."));
+        console.log("No articles found for keyword \"".concat(keyword, "\"."));
         return;
     }
     var directory = path.join(__dirname, 'scraped_articles');
@@ -176,15 +186,15 @@ function saveToCSV(articles, keyword) {
     });
     csv.writeRecords(articles)
         .then(function () {
-        console.log("Artikel telah berhasil disimpan ke ".concat(csvPath));
+        console.log("Articles successfully saved to ".concat(csvPath));
     })
         .catch(function (error) {
-        console.error('Error menulis CSV:', error);
+        console.error('Error writing CSV:', error);
     });
 }
 // Run Scrap functions
 scrapeArticlesForKeywords().then(function () {
-    console.log('Scraping selesai.');
+    console.log('Scraping completed.');
 }).catch(function (error) {
     console.error(error);
 });

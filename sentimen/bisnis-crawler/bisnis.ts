@@ -5,17 +5,17 @@ import * as fs from 'fs';
 import * as csvWriter from 'csv-writer';
 
 const keywords = [
-    'pinjaman pemerintah', 'surat utang', 'investor asing', 'sbn ritel', 'sukuk',
-    'surat berharga negara', 'kreditur pemerintah', 'ori', 'pasar obligasi', 
-    'obligasi negara', 'inflasi', 'suku bunga', 'sun', 'jatuh tempo', 
-    'nilai tukar', 'kepemilikan asing', 'yield', 'ust', 'us treasury', 
-    'surat utang negara', 'obligasi pemerintah', 'obligasi ritel indonesia', 
-    'kebijakan moneter', 'likuiditas pasar', 'imbal hasil', 'pasar global', 
-    'rating kredit', 'sentimen pasar', 'pasar sekunder', 'Obligasi Negara', 
-    'Surat Utang Negara', 'Pergerakan Yield', 'Analisis Sentimen', 'Yield Obligasi', 
-    'Pasar Obligasi', 'Kinerja Obligasi', 'Tren Yield', 'Pengaruh Makroekonomi', 
-    'Kondisi Ekonomi', 'Suku Bunga', 'Kebijakan Moneter', 'Inflasi', 
-    'Pasar Keuangan', 'Volatilitas Pasar', 'Pergerakan Suku Bunga', 
+    //'pinjaman pemerintah', 'surat utang', 'investor asing', 'sbn ritel', 'sukuk',
+    //'surat berharga negara', 'kreditur pemerintah', 'ori', 'pasar obligasi', 
+    //'obligasi negara', 'inflasi', 'suku bunga', 'sun', 'jatuh tempo', 
+    //'nilai tukar', 'kepemilikan asing', 'yield', 'ust', 'us treasury', 
+    //'surat utang negara', 'obligasi pemerintah', 'obligasi ritel indonesia', 
+    //'kebijakan moneter', 'likuiditas pasar', 'imbal hasil', 'pasar global', 
+    //'rating kredit', 'sentimen pasar', 'pasar sekunder', 'Obligasi Negara', 
+    //'Surat Utang Negara', 'Pergerakan Yield', 'Analisis Sentimen', 'Yield Obligasi', 
+    //'Pasar Obligasi', 'Kinerja Obligasi', 'Tren Yield', 'Pengaruh Makroekonomi', 
+    //'Kondisi Ekonomi', 'Suku Bunga', 'Kebijakan Moneter', 'Inflasi', 
+    //'Pasar Keuangan', 'Volatilitas Pasar', 'Pergerakan Suku Bunga', 
     'Imbal Hasil', 'Krisis Keuangan', 'Pemerintah Indonesia', 'Sentimen Investor'
 ];
 const maxPages = 10000;

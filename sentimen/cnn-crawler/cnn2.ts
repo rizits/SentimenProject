@@ -5,12 +5,12 @@ import * as fs from 'fs';
 import * as csvWriter from 'csv-writer';
 
 const keywords = [
-    'pinjaman pemerintah', 'surat utang', 'investor asing', 'sbn ritel', 'sukuk',
-    'surat berharga negara', 'kreditur pemerintah', 'ori', 'pasar obligasi', 
-    'obligasi negara', 'inflasi', 'suku bunga', 'sun', 'jatuh tempo', 
-    'nilai tukar', 'kepemilikan asing', 'yield', 'ust', 'us treasury', 
-    'surat utang negara', 'obligasi pemerintah', 'obligasi ritel indonesia', 
-    'kebijakan moneter', 'likuiditas pasar', 'imbal hasil', 'pasar global', 
+    //'pinjaman pemerintah', 'surat utang', 'investor asing', 'sbn ritel', 'sukuk',
+    //'surat berharga negara', 'kreditur pemerintah', 'ori', 'pasar obligasi', 
+    //'obligasi negara', 'inflasi', 'suku bunga', 'sun', 'jatuh tempo', 
+    //'nilai tukar', 'kepemilikan asing', 'yield', 'ust', 'us treasury', 
+    //'surat utang negara', 'obligasi pemerintah', 'obligasi ritel indonesia', 
+    //'kebijakan moneter', 'likuiditas pasar', 'imbal hasil', 'pasar global', 
     'rating kredit', 'sentimen pasar', 'pasar sekunder', 'Obligasi Negara', 
     'Surat Utang Negara', 'Pergerakan Yield', 'Analisis Sentimen', 'Yield Obligasi', 
     'Pasar Obligasi', 'Kinerja Obligasi', 'Tren Yield', 'Pengaruh Makroekonomi', 
@@ -24,11 +24,11 @@ const maxPages = 9999;
 async function scrapeArticlesForKeywords() {
     for (const keyword of keywords) {
         console.log(`Scraping articles for keyword: ${keyword}`);
-        await scrapeArticlesFromTagPage(keyword);
+        await scrapeArticlesFromSearchPage(keyword);
     }
 }
 
-async function scrapeArticlesFromTagPage(keyword: string) {
+async function scrapeArticlesFromSearchPage(keyword: string) {
     let pageNumber = 1;
     let morePages = true;
 
@@ -36,12 +36,12 @@ async function scrapeArticlesFromTagPage(keyword: string) {
 
     while (morePages && pageNumber <= maxPages) {
         try {
-            const url = `https://www.cnnindonesia.com/tag/${encodeURIComponent(keyword)}/${pageNumber}`;
+            const url = `https://www.cnnindonesia.com/search/?query=${encodeURIComponent(keyword)}&page=${pageNumber}`;
 
             const { data } = await axios.get(url);
             const $ = cheerio.load(data);
 
-            const articleElements = $('.flex.flex-col.gap-5 > article');
+            const articleElements = $('.list.media_rows.list-berita > article');
 
             if (articleElements.length === 0) {
                 morePages = false;
@@ -50,7 +50,7 @@ async function scrapeArticlesFromTagPage(keyword: string) {
 
             for (let i = 0; i < articleElements.length; i++) {
                 const element = articleElements[i];
-                const title = $(element).find('h2').text().trim();
+                const title = $(element).find('h2.title').text().trim();
                 const link = $(element).find('a').attr('href') || '';
 
                 if (title && link) {
@@ -60,13 +60,13 @@ async function scrapeArticlesFromTagPage(keyword: string) {
                     const $$ = cheerio.load(articleData.data);
 
                     // Mengambil konten artikel
-                    const content = $$('.detail-text.text-cnn_black.text-sm.grow.min-w-0').text().trim();
+                    const content = $$('.detail_text').text().trim();
                     
                     // Mengambil waktu terbit artikel
-                    const publishTime = $$('div.text-cnn_grey.text-sm.mb-4').text().trim();
+                    const publishTime = $$('div.date').text().trim();
 
                     // Mengambil penulis artikel
-                    const authorElement = $$('.detail-text.text-cnn_black.text-sm.grow.min-w-0 strong').last().text().trim();
+                    const authorElement = $$('.detail_text strong').last().text().trim();
                     const author = authorElement || 'Tidak Diketahui';
 
                     articles.push({
