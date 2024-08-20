@@ -21,7 +21,7 @@ async function scrapeArticlesFromTagPage(keyword: string) {
     let morePages = true;
     const seenLinks = new Set<string>();
 
-    const articles: { title: string; scrappingDate: string; articleDate: string; author: string; link: string; content: string }[] = [];
+    const articles: { title: string; scrappingDate: string; articleDate: string; author: string; link: string; content: string; category: string }[] = [];
 
     while (morePages) {
         try {
@@ -38,6 +38,7 @@ async function scrapeArticlesFromTagPage(keyword: string) {
                 const element = articleElements[i];
                 const title = $(element).find('.sp-hl a').text().trim(); // Adjusted selector for title
                 const link = $(element).find('.sp-hl a').attr('href') || ''; // Adjusted selector for link
+                const category = $(element).find('span.linkto-orange.hrf-gede.mar-r-5 a').text().trim(); 
 
                 if (title && link) {
                     // Correcting the link by removing 'www.kontan.co.id' and replacing it with the appropriate base domain
@@ -53,10 +54,11 @@ async function scrapeArticlesFromTagPage(keyword: string) {
                     newArticleFound = true;
 
                     try {
-                        const { content, author, publishTime } = await scrapeArticleContent(fullLink);
+                        const { content, author, publishTime } = await scrapeArticleContent(fullLink, category);
                     
                         articles.push({
                             title: title,
+                            category: category,
                             scrappingDate: new Date().toISOString(),
                             articleDate: publishTime,
                             author: author || '',
@@ -67,7 +69,6 @@ async function scrapeArticlesFromTagPage(keyword: string) {
                     } catch (error) {
                         console.error(`Error fetching article content from ${fullLink}:`, error);
                     }
-                    
                 }
             }
 
@@ -93,29 +94,56 @@ async function scrapeArticlesFromTagPage(keyword: string) {
     saveToCSV(articles, keyword);
 }
 
-async function scrapeArticleContent(url: string): Promise<{ content: string; author: string; publishTime: string }> {
+async function scrapeArticleContent(url: string, category: string): Promise<{ content: string; author: string; publishTime: string }> {
     try {
         console.log(`Fetching content from: ${url}`);
         const { data } = await axios.get(url);
         const $ = cheerio.load(data);
 
-        // Extract all the text within the <p> tags inside the desired div
-        const content = $('.tmpt-desk-kon p').not(':first').map((i, el) => $(el).text().trim()).get().join(' ');
+        let content = '';
+        let author = '';
+        let publishTime = '';
 
-        // Extract the author from the first <p> tag
-        const author = $('.tmpt-desk-kon p').first().text().trim();
+        if (category === 'pressrelease') {
+            content = $('#release-content p').map((i, el) => $(el).text().trim()).get().join(' ');
+            author = $('.post p b').last().text().trim(); // Adjusted to select the editor's name
+            // Extracting and formatting the publish date
+            const day = $('.date .dd').text().trim();
+            const month = $('.date .mm').text().trim();
+            const year = $('.date .yy').text().trim();
+            publishTime = `${day} ${month} ${year}`; // Formatting the date as "09 June 2024"
+        } else if (category === 'kiaton') {
+            content = $('.ctn p').not(':empty').map((i, el) => $(el).text().trim()).get().join(' ');
+            author = $('.fs13.color-gray.mar-t-10 span').text().replace('Penulis:', '').trim(); // Extract the author from the span
+            publishTime = $('.fs13.color-gray.mar-t-10').clone().children().remove().end().text().trim(); // Remove the child span to get only the date
+        } else if (category === 'momsmoney.id') {
+            content = $('.entry-content p').map((i, el) => $(el).text().trim()).get().join(' ');
+            // Extracting the author (considering both reporter and editor)
+            const reporter = $('.utf_post_author').first().text().replace('Reporter', '').trim();
+            const editor = $('.utf_post_author').last().text().replace('Editor', '').trim();
+            author = `${reporter}, ${editor}`;
+            // Extract the publish time
+            publishTime = $('.utf_post_date').text().trim();
+        } else if (category === 'insight'){
+            // Skip scraping content for insight category
+            console.log(`Skipping premium content for insight category at ${url}`);
+            return { content: 'Premium Content - Not Scraped', author: 'Premium User Only', publishTime: '' };
+        } else {
+            // Default or other categories
+            content = $('.tmpt-desk-kon p').not(':first').map((i, el) => $(el).text().trim()).get().join(' ');
+            author = $('.tmpt-desk-kon p').first().text().trim();
+            // Extract the publish time
+            publishTime = $('div.fs14.ff-opensans.font-gray').text().trim();
+        }
 
-        // Extract Date
-        const publishTime = $('div.fs14.ff-opensans.font-gray').text().trim();
-
-        return { content, author, publishTime };  // Ensure publishTime is returned here
+        return { content, author, publishTime };  
     } catch (error) {
         console.error(`Error fetching article content from ${url}:`, error);
         return { content: '', author: '', publishTime: '' };  // Return publishTime even in case of an error
     }
 }
 
-function saveToCSV(articles: { title: string; scrappingDate: string; articleDate: string; author: string; link: string; content: string }[], keyword: string) {
+function saveToCSV(articles: { title: string; scrappingDate: string; articleDate: string; author: string; link: string; content: string; category: string }[], keyword: string) {
     if (articles.length === 0) {
         console.log(`Tidak ada artikel yang ditemukan untuk kata kunci "${keyword}".`);
         return;
@@ -135,7 +163,8 @@ function saveToCSV(articles: { title: string; scrappingDate: string; articleDate
             { id: 'articleDate', title: 'Article Date' },
             { id: 'author', title: 'Author' },
             { id: 'link', title: 'Link' },
-            { id: 'content', title: 'Content' }
+            { id: 'content', title: 'Content' },
+            { id: 'category', title: 'Category' }
         ]
     });
 

@@ -71,7 +71,7 @@ function scrapeArticlesForKeywords() {
 }
 function scrapeArticlesFromTagPage(keyword) {
     return __awaiter(this, void 0, void 0, function () {
-        var pageNumber, morePages, seenLinks, articles, url, data, $, articleElements, newArticleFound, i, element, title, link, fullLink, _a, content, author, publishTime, error_1, error_2;
+        var pageNumber, morePages, seenLinks, articles, url, data, $, articleElements, newArticleFound, i, element, title, link, category, fullLink, _a, content, author, publishTime, error_1, error_2;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -100,6 +100,7 @@ function scrapeArticlesFromTagPage(keyword) {
                     element = articleElements[i];
                     title = $(element).find('.sp-hl a').text().trim();
                     link = $(element).find('.sp-hl a').attr('href') || '';
+                    category = $(element).find('span.linkto-orange.hrf-gede.mar-r-5 a').text().trim();
                     if (!(title && link)) return [3 /*break*/, 8];
                     fullLink = link.startsWith('http') ? link : "https://".concat(link);
                     if (seenLinks.has(fullLink)) {
@@ -112,11 +113,12 @@ function scrapeArticlesFromTagPage(keyword) {
                     _b.label = 5;
                 case 5:
                     _b.trys.push([5, 7, , 8]);
-                    return [4 /*yield*/, scrapeArticleContent(fullLink)];
+                    return [4 /*yield*/, scrapeArticleContent(fullLink, category)];
                 case 6:
                     _a = _b.sent(), content = _a.content, author = _a.author, publishTime = _a.publishTime;
                     articles.push({
                         title: title,
+                        category: category,
                         scrappingDate: new Date().toISOString(),
                         articleDate: publishTime,
                         author: author || '',
@@ -156,9 +158,9 @@ function scrapeArticlesFromTagPage(keyword) {
         });
     });
 }
-function scrapeArticleContent(url) {
+function scrapeArticleContent(url, category) {
     return __awaiter(this, void 0, void 0, function () {
-        var data, $_1, content, author, publishTime, error_3;
+        var data, $_1, content, author, publishTime, day, month, year, reporter, editor, error_3;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -168,10 +170,43 @@ function scrapeArticleContent(url) {
                 case 1:
                     data = (_a.sent()).data;
                     $_1 = cheerio.load(data);
-                    content = $_1('.tmpt-desk-kon p').not(':first').map(function (i, el) { return $_1(el).text().trim(); }).get().join(' ');
-                    author = $_1('.tmpt-desk-kon p').first().text().trim();
-                    publishTime = $_1('div.fs14.ff-opensans.font-gray').text().trim();
-                    return [2 /*return*/, { content: content, author: author, publishTime: publishTime }]; // Ensure publishTime is returned here
+                    content = '';
+                    author = '';
+                    publishTime = '';
+                    if (category === 'pressrelease') {
+                        content = $_1('#release-content p').map(function (i, el) { return $_1(el).text().trim(); }).get().join(' ');
+                        author = $_1('.post p b').last().text().trim(); // Adjusted to select the editor's name
+                        day = $_1('.date .dd').text().trim();
+                        month = $_1('.date .mm').text().trim();
+                        year = $_1('.date .yy').text().trim();
+                        publishTime = "".concat(day, " ").concat(month, " ").concat(year); // Formatting the date as "09 June 2024"
+                    }
+                    else if (category === 'kiaton') {
+                        content = $_1('.ctn p').not(':empty').map(function (i, el) { return $_1(el).text().trim(); }).get().join(' ');
+                        author = $_1('.fs13.color-gray.mar-t-10 span').text().replace('Penulis:', '').trim(); // Extract the author from the span
+                        publishTime = $_1('.fs13.color-gray.mar-t-10').clone().children().remove().end().text().trim(); // Remove the child span to get only the date
+                    }
+                    else if (category === 'momsmoney.id') {
+                        content = $_1('.entry-content p').map(function (i, el) { return $_1(el).text().trim(); }).get().join(' ');
+                        reporter = $_1('.utf_post_author').first().text().replace('Reporter', '').trim();
+                        editor = $_1('.utf_post_author').last().text().replace('Editor', '').trim();
+                        author = "".concat(reporter, ", ").concat(editor);
+                        // Extract the publish time
+                        publishTime = $_1('.utf_post_date').text().trim();
+                    }
+                    else if (category === 'insight') {
+                        // Skip scraping content for insight category
+                        console.log("Skipping premium content for insight category at ".concat(url));
+                        return [2 /*return*/, { content: 'Premium Content - Not Scraped', author: 'Premium User Only', publishTime: '' }];
+                    }
+                    else {
+                        // Default or other categories
+                        content = $_1('.tmpt-desk-kon p').not(':first').map(function (i, el) { return $_1(el).text().trim(); }).get().join(' ');
+                        author = $_1('.tmpt-desk-kon p').first().text().trim();
+                        // Extract the publish time
+                        publishTime = $_1('div.fs14.ff-opensans.font-gray').text().trim();
+                    }
+                    return [2 /*return*/, { content: content, author: author, publishTime: publishTime }];
                 case 2:
                     error_3 = _a.sent();
                     console.error("Error fetching article content from ".concat(url, ":"), error_3);
@@ -199,7 +234,8 @@ function saveToCSV(articles, keyword) {
             { id: 'articleDate', title: 'Article Date' },
             { id: 'author', title: 'Author' },
             { id: 'link', title: 'Link' },
-            { id: 'content', title: 'Content' }
+            { id: 'content', title: 'Content' },
+            { id: 'category', title: 'Category' }
         ]
     });
     csv.writeRecords(articles)
