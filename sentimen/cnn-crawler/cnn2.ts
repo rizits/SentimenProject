@@ -1,28 +1,26 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import * as path from 'path';
+import * as fs from 'fs';
 import * as csvWriter from 'csv-writer';
 
-// Daftar kata kunci
 const keywords = [
-    'pinjaman pemerintah', 'surat utang', 'investor asing', 'wakaf', 'sbn ritel',
-    'surat berharga syariah negara', 'sbsn', 'pembiayaan', 'sukuk', 'hibah',
-    'surat berharga negara', 'kreditur pemerintah', 'pdn', 'ekspor', 'aset',
-    'penjamin', 'risiko kredit', 'ori', 'pasar obligasi', 'obligasi negara',
-    'inflasi', 'suku bunga', 'sun', 'jatuh tempo', 'nilai tukar', 'kepemilikan asing',
-    'yield', 'ust', 'us treasury', 'surat utang negara', 'obligasi pemerintah',
-    'obligasi ritel indonesia', 'sbn', 'kebijakan moneter', 'likuiditas pasar',
-    'imbal hasil', 'pasar global', 'rating kredit', 'sentimen pasar', 'pasar sekunder',
-    'economic growth', 'inflation rates', 'interest rates', 'monetary policy',
-    'geopolitical tensions', 'market volatility', 'risk appetite', 'safe haven demand',
-    'credit ratings', 'economic indicators', 'global trade', 'currency earnings',
-    'currency fluctuations', 'commodity prices', 'fiscal policy', 'debt levels',
-    'liquidity conditions', 'global supply chains', 'political events', 'investors sentiments'
+    'pinjaman pemerintah', 'surat utang', 'investor asing', 'sbn ritel', 'sukuk',
+    'surat berharga negara', 'kreditur pemerintah', 'ori', 'pasar obligasi', 
+    'obligasi negara', 'inflasi', 'suku bunga', 'sun', 'jatuh tempo', 
+    'nilai tukar', 'kepemilikan asing', 'yield', 'ust', 'us treasury', 
+    'surat utang negara', 'obligasi pemerintah', 'obligasi ritel indonesia', 
+    'kebijakan moneter', 'likuiditas pasar', 'imbal hasil', 'pasar global', 
+    'rating kredit', 'sentimen pasar', 'pasar sekunder', 'Obligasi Negara', 
+    'Surat Utang Negara', 'Pergerakan Yield', 'Analisis Sentimen', 'Yield Obligasi', 
+    'Pasar Obligasi', 'Kinerja Obligasi', 'Tren Yield', 'Pengaruh Makroekonomi', 
+    'Kondisi Ekonomi', 'Suku Bunga', 'Kebijakan Moneter', 'Inflasi', 
+    'Pasar Keuangan', 'Volatilitas Pasar', 'Pergerakan Suku Bunga', 
+    'Imbal Hasil', 'Krisis Keuangan', 'Pemerintah Indonesia', 'Sentimen Investor'
 ];
 
-const maxPages = 50; // Jumlah maksimum halaman yang ingin di-scrape untuk setiap kata kunci
+const maxPages = 9999;
 
-// Fungsi utama untuk scraping
 async function scrapeArticlesForKeywords() {
     for (const keyword of keywords) {
         console.log(`Scraping articles for keyword: ${keyword}`);
@@ -34,7 +32,7 @@ async function scrapeArticlesFromTagPage(keyword: string) {
     let pageNumber = 1;
     let morePages = true;
 
-    const articles: { title: string; publishTime: string; website: string; content: string }[] = [];
+    const articles: { title: string; scrappingDate: string; articleDate: string; author: string; link: string; content: string }[] = [];
 
     while (morePages && pageNumber <= maxPages) {
         try {
@@ -67,10 +65,16 @@ async function scrapeArticlesFromTagPage(keyword: string) {
                     // Mengambil waktu terbit artikel
                     const publishTime = $$('div.text-cnn_grey.text-sm.mb-4').text().trim();
 
+                    // Mengambil penulis artikel
+                    const authorElement = $$('.detail-text.text-cnn_black.text-sm.grow.min-w-0 strong').last().text().trim();
+                    const author = authorElement || 'Tidak Diketahui';
+
                     articles.push({
                         title: title,
-                        publishTime: publishTime,
-                        website: 'CNN Indonesia',
+                        scrappingDate: new Date().toISOString(),
+                        articleDate: publishTime,
+                        author: author,  // Menyimpan penulis di sini
+                        link: articleUrl,
                         content: content
                     });
                 }
@@ -87,35 +91,42 @@ async function scrapeArticlesFromTagPage(keyword: string) {
     saveToCSV(articles, keyword);
 }
 
-// Fungsi untuk menyimpan hasil scraping ke file CSV
-function saveToCSV(articles: { title: string; publishTime: string; website: string; content: string }[], keyword: string) {
+// Save to csv
+function saveToCSV(articles: { title: string; scrappingDate: string; articleDate: string; author: string; link: string; content: string }[], keyword: string) {
     if (articles.length === 0) {
         console.log(`Tidak ada artikel yang ditemukan untuk kata kunci "${keyword}".`);
         return;
     }
 
-    const csvPath = path.join(__dirname, `${keyword.replace(/ /g, '_')}_scraped_articles.csv`);
+    const directory = path.join(__dirname, 'scraped_articles');
+    if (!fs.existsSync(directory)) {
+        fs.mkdirSync(directory, { recursive: true });
+    }
+
+    const csvPath = path.join(directory, `${keyword.replace(/ /g, '_')}_scraped_articles.csv`);
     const createCsvWriter = csvWriter.createObjectCsvWriter;
     const csv = createCsvWriter({
         path: csvPath,
         header: [
             { id: 'title', title: 'Title' },
-            { id: 'publishTime', title: 'Publish Time' },
-            { id: 'website', title: 'Website' },
+            { id: 'scrappingDate', title: 'Scrapping Date' },
+            { id: 'articleDate', title: 'Article Date' },
+            { id: 'author', title: 'Author' },
+            { id: 'link', title: 'Link' },
             { id: 'content', title: 'Content' }
         ]
     });
 
     csv.writeRecords(articles)
         .then(() => {
-            console.log(`Artikel telah berhasil disimpan ke ${keyword.replace(/ /g, '_')}_scraped_articles.csv`);
+            console.log(`Artikel telah berhasil disimpan ke ${csvPath}`);
         })
         .catch(error => {
             console.error('Error menulis CSV:', error);
         });
 }
 
-// Menjalankan fungsi scraping
+// Run Scrap functions
 scrapeArticlesForKeywords().then(() => {
     console.log('Scraping selesai.');
 }).catch(error => {

@@ -61,8 +61,8 @@ async function scrapeArticlesFromTagPage(keyword: string) {
                     }
 
                     console.log(`Mengambil artikel: ${title}`);
-                    seenLinks.add(fullLink); // Tambahkan link ke daftar yang sudah dilihat
-                    newArticleFound = true;  // Menandai bahwa setidaknya ada satu artikel baru ditemukan
+                    seenLinks.add(fullLink); // Tambah link
+                    newArticleFound = true;  // Tanda menemukan artikel baru
 
                     try {
                         const { content, author } = await scrapeArticleContent(fullLink);
@@ -82,7 +82,7 @@ async function scrapeArticlesFromTagPage(keyword: string) {
                 }
             }
 
-            // Jika tidak ada artikel baru yang ditemukan di halaman ini, hentikan loop
+            // Stop loop saat tidak ada artikel baru yang ditemukan di halaman
             if (!newArticleFound) {
                 console.log(`No new articles found for keyword "${keyword}" at page ${pageNumber}. Stopping...`);
                 morePages = false;
@@ -91,7 +91,7 @@ async function scrapeArticlesFromTagPage(keyword: string) {
 
             pageNumber += 1;
 
-            // Batasi jumlah halaman untuk setiap keyword (misalnya 5000 halaman)
+            // Batasi jumlah halaman untuk setiap keyword
             if (pageNumber > maxPages) {
                 console.log(`Maximum pages reached for keyword "${keyword}". Stopping...`);
                 morePages = false;
