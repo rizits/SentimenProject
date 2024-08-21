@@ -6,17 +6,10 @@ import * as csvWriter from 'csv-writer';
 import moment from 'moment'; // Use default import for moment
 
 const keywords = [
-    'pinjaman pemerintah', 'surat utang', 'investor asing', 'sbn ritel', 'sukuk', 'surat berharga negara',
-    'kreditur pemerintah', 'ori', 'pasar obligasi', 'obligasi negara', 'inflasi', 'suku bunga', 'sun', 'jatuh tempo', 
-    'nilai tukar', 'kepemilikan asing', 'yield', 'ust', 'us treasury', 'surat utang negara', 'obligasi pemerintah',
-    'obligasi ritel indonesia', 'kebijakan moneter', 'likuiditas pasar', 'imbal hasil', 'pasar global', 'rating kredit',
-    'sentimen pasar', 'pasar sekunder', 'Obligasi Negara', 'Surat Utang Negara', 'Pergerakan Yield', 'Analisis Sentimen',
-    'Yield Obligasi', 'Pasar Obligasi', 'Kinerja Obligasi', 'Tren Yield', 'Pengaruh Makroekonomi', 'Kondisi Ekonomi',
-    'Suku Bunga', 'Kebijakan Moneter', 'Inflasi', 'Pasar Keuangan', 'Volatilitas Pasar', 'Pergerakan Suku Bunga', 
-    'Imbal Hasil', 'Krisis Keuangan', 'Pemerintah Indonesia', 'Sentimen Investor'
+    'pinjaman pemerintah'
 ];
 
-const maxPages = 10000;
+const maxPages = 1;
 
 async function scrapeArticlesForKeywords() {
     const allArticles = []; // Accumulate all articles here
@@ -109,8 +102,17 @@ async function scrapeArticleContent(url: string): Promise<{ content: string; aut
     try {
         const { data } = await axios.get(url); // Fetching the article page
         const $ = cheerio.load(data); // Loading the HTML into Cheerio
+        // Extract and format the article content
+        const paragraphs = $('.detail__body-text.itp_bodycontent p').map((i, el) => {
+            const text = $(el).text().trim();
+            // Filter out unwanted content and empty paragraphs
+            if (text && text !== "ADVERTISEMENT" && text !== "SCROLL TO CONTINUE WITH CONTENT") {
+                return text;
+            }
+        }).get();
 
-        const content = $('.detail__body-text.itp_bodycontent').text().trim();
+        const content = paragraphs.join('\n'); // Join paragraphs with a single newline for better readability
+        // Scrape the author
         const author = $('.detail__author').text().trim();
         const date = $('.detail__date').text().trim();
         
@@ -144,7 +146,8 @@ function saveToCSV(articles: { title: string; scrappingDate: string; articleDate
             { id: 'author', title: 'Author' },
             { id: 'link', title: 'Link' },
             { id: 'content', title: 'Content' }
-        ]
+        ],
+        fieldDelimiter: ';', // Set semicolon as delimiter
     });
 
     csv.writeRecords(articles)
