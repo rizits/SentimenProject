@@ -44,7 +44,7 @@ var csvWriter = require("csv-writer");
 var keywords = [
     'pinjaman pemerintah'
 ];
-var maxPages = 1;
+var maxPages = 2;
 function scrapeArticlesForKeywords() {
     return __awaiter(this, void 0, void 0, function () {
         var allArticles, _i, keywords_1, keyword, articlesForKeyword;
@@ -160,7 +160,7 @@ function scrapeArticlesFromTagPage(keyword) {
 }
 function scrapeArticleContent(url) {
     return __awaiter(this, void 0, void 0, function () {
-        var data, $_1, paragraphs, content, author, date, error_3;
+        var data, $, content, author, date, error_3;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -168,17 +168,10 @@ function scrapeArticleContent(url) {
                     return [4 /*yield*/, axios_1.default.get(url)];
                 case 1:
                     data = (_a.sent()).data;
-                    $_1 = cheerio.load(data);
-                    paragraphs = $_1('.detail__body-text.itp_bodycontent p').map(function (i, el) {
-                        var text = $_1(el).text().trim();
-                        // Filter out unwanted content and empty paragraphs
-                        if (text && text !== "ADVERTISEMENT" && text !== "SCROLL TO CONTINUE WITH CONTENT") {
-                            return text;
-                        }
-                    }).get();
-                    content = paragraphs.join('\n');
-                    author = $_1('.detail__author').text().trim();
-                    date = $_1('.detail__date').text().trim();
+                    $ = cheerio.load(data);
+                    content = $('.detail__body-text.itp_bodycontent').text().trim();
+                    author = $('.detail__author').text().trim();
+                    date = $('.detail__date').text().trim();
                     return [2 /*return*/, { content: content, author: author, date: date }];
                 case 2:
                     error_3 = _a.sent();
