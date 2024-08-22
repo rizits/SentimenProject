@@ -21,10 +21,16 @@ const keywords = [
 
 const maxPages = 9999;
 
+// Konfigurasi axios dengan timeout lebih panjang
+const axiosConfig = {
+    timeout: 20000 // Set timeout to 20 seconds
+};
+
 async function scrapeArticlesForKeywords() {
     for (const keyword of keywords) {
         console.log(`Scraping articles for keyword: ${keyword}`);
         await scrapeArticlesFromSearchPage(keyword);
+        await sleep(5000); // Jeda 5 detik antara scraping kata kunci
     }
 }
 
@@ -32,16 +38,32 @@ async function scrapeArticlesFromSearchPage(keyword: string) {
     let pageNumber = 1;
     let morePages = true;
 
-    const articles: { title: string; scrappingDate: string; articleDate: string; author: string; link: string; content: string }[] = [];
+    const articles = [];
 
     while (morePages && pageNumber <= maxPages) {
         try {
             const url = `https://www.cnnindonesia.com/search/?query=${encodeURIComponent(keyword)}&page=${pageNumber}`;
+            let attempt = 0;
+            let maxAttempts = 5;
+            let data;
 
-            const { data } = await axios.get(url);
+            // Logika retry
+            while (attempt < maxAttempts) {
+                try {
+                    const response = await axios.get(url, axiosConfig);
+                    data = response.data;
+                    break;  // Jika berhasil, keluar dari loop retry
+                } catch (error) {
+                    attempt++;
+                    console.error(`Attempt ${attempt} failed for ${url}: ${error}`);
+                    if (attempt >= maxAttempts) throw error;
+                    await sleep(2000);  // Tunggu 2 detik sebelum retry
+                }
+            }
+
             const $ = cheerio.load(data);
 
-            const articleElements = $('.list.media_rows.list-berita > article');
+            const articleElements = $('article.flex-grow');
 
             if (articleElements.length === 0) {
                 morePages = false;
@@ -50,30 +72,22 @@ async function scrapeArticlesFromSearchPage(keyword: string) {
 
             for (let i = 0; i < articleElements.length; i++) {
                 const element = articleElements[i];
-                const title = $(element).find('h2.title').text().trim();
+                const title = $(element).find('h2.text-cnn_black_light').text().trim();
                 const link = $(element).find('a').attr('href') || '';
+                const articleUrl = link.startsWith('http') ? link : `https://www.cnnindonesia.com${link}`;
 
-                if (title && link) {
+                if (title && articleUrl) {
                     console.log(`Mengambil artikel: ${title}`);
-                    const articleUrl = link.startsWith('http') ? link : `https://www.cnnindonesia.com${link}`;
-                    const articleData = await axios.get(articleUrl);
+                    const articleData = await axios.get(articleUrl, axiosConfig);
                     const $$ = cheerio.load(articleData.data);
-
-                    // Mengambil konten artikel
-                    const content = $$('.detail_text').text().trim();
-                    
-                    // Mengambil waktu terbit artikel
-                    const publishTime = $$('div.date').text().trim();
-
-                    // Mengambil penulis artikel
-                    const authorElement = $$('.detail_text strong').last().text().trim();
-                    const author = authorElement || 'Tidak Diketahui';
+                    const content = $$('.detail-text.text-cnn_black.text-sm.grow.min-w-0').text().trim();
+                    const publishTime = $(element).find('span.text-cnn_black_light3').text().trim();
 
                     articles.push({
                         title: title,
                         scrappingDate: new Date().toISOString(),
                         articleDate: publishTime,
-                        author: author,  // Menyimpan penulis di sini
+                        author: '',
                         link: articleUrl,
                         content: content
                     });
@@ -81,6 +95,7 @@ async function scrapeArticlesFromSearchPage(keyword: string) {
             }
 
             pageNumber += 1;
+            await sleep(5000); // Jeda 5 detik antara halaman
 
         } catch (error) {
             console.error(`Error scraping CNN for keyword "${keyword}" on page ${pageNumber}: ${error}`);
@@ -91,8 +106,7 @@ async function scrapeArticlesFromSearchPage(keyword: string) {
     saveToCSV(articles, keyword);
 }
 
-// Save to csv
-function saveToCSV(articles: { title: string; scrappingDate: string; articleDate: string; author: string; link: string; content: string }[], keyword: string) {
+function saveToCSV(articles, keyword) {
     if (articles.length === 0) {
         console.log(`Tidak ada artikel yang ditemukan untuk kata kunci "${keyword}".`);
         return;
@@ -126,7 +140,12 @@ function saveToCSV(articles: { title: string; scrappingDate: string; articleDate
         });
 }
 
-// Run Scrap functions
+// Fungsi sleep untuk menambahkan jeda
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Jalankan fungsi scraping
 scrapeArticlesForKeywords().then(() => {
     console.log('Scraping selesai.');
 }).catch(error => {

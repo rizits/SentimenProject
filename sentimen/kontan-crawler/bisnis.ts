@@ -19,7 +19,7 @@ const keywords = [
     'currency fluctuations', 'commodity prices', 'fiscal policy', 'debt levels',
     'liquidity conditions', 'global supply chains', 'political events', 'investors sentiments'
 ];
-const maxPages = 1;
+const maxPages = 10000;
 
 async function scrapeArticlesForKeywords() {
     for (const keyword of keywords) {
