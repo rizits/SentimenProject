@@ -1,0 +1,22 @@
+{
+  "name": "bbc-crawler",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/puppeteer": "^7.0.4",
+    "puppeteer": "^23.1.1",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "axios": "^1.7.5",
+    "date-fns": "^3.6.0"
+  }
+}
