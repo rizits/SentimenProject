@@ -1,16 +1,10 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import * as path from 'path';
 import * as fs from 'fs';
-import * as csvWriter from 'csv-writer';
+import * as path from 'path';
 
+// List of keywords to search
 const keywords = [
-    //'pinjaman pemerintah', 'surat utang', 'investor asing', 'sbn ritel', 'sukuk',
-    //'surat berharga negara', 'kreditur pemerintah', 'ori', 'pasar obligasi', 
-    //'obligasi negara', 'inflasi', 'suku bunga', 'sun', 'jatuh tempo', 
-    //'nilai tukar', 'kepemilikan asing', 'yield', 'ust', 'us treasury', 
-    //'surat utang negara', 'obligasi pemerintah', 'obligasi ritel indonesia', 
-    //'kebijakan moneter', 'likuiditas pasar', 'imbal hasil', 'pasar global', 
     'rating kredit', 'sentimen pasar', 'pasar sekunder', 'Obligasi Negara', 
     'Surat Utang Negara', 'Pergerakan Yield', 'Analisis Sentimen', 'Yield Obligasi', 
     'Pasar Obligasi', 'Kinerja Obligasi', 'Tren Yield', 'Pengaruh Makroekonomi', 
@@ -19,116 +13,97 @@ const keywords = [
     'Imbal Hasil', 'Krisis Keuangan', 'Pemerintah Indonesia', 'Sentimen Investor'
 ];
 
-const maxPages = 9999;
+// Maximum number of pages to scrape for each keyword
+const maxPages = 10;
 
-async function scrapeArticlesForKeywords() {
-    for (const keyword of keywords) {
-        console.log(`Scraping articles for keyword: ${keyword}`);
-        await scrapeArticlesFromSearchPage(keyword);
+// Create the output directory if it doesn't exist
+const outputDir = path.join(__dirname, 'scraped_articles');
+if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir);
+}
+
+// Function to scrape the details of a single article
+async function scrapeArticleDetails(url: string) {
+    try {
+        const response = await axios.get(url);
+        const $ = cheerio.load(response.data);
+
+        const title = $('h1').text().trim();
+        const scrappingDate = new Date().toISOString();
+        const articleDate = $('div.text-cnn_grey.text-sm.mb-4').text().trim();
+        const author = $('div.text-cnn_black_light3.text-sm.mb-2.5').text().split('|')[0].trim();
+        const content = $('div.detail-text').text().trim();
+
+        return {
+            Title: title,
+            ScrappingDate: scrappingDate,
+            ArticleDate: articleDate,
+            Author: author,
+            Link: url,
+            Content: content
+        };
+    } catch (error) {
+        console.error(`Error scraping article details from ${url}:`, error);
+        return null;
     }
 }
 
-async function scrapeArticlesFromSearchPage(keyword: string) {
-    let pageNumber = 1;
-    let morePages = true;
+// Function to scrape articles from search results pages
+async function scrapeCNNArticles(keyword: string, maxPages: number) {
+    const baseUrl = 'https://www.cnnindonesia.com/search/';
+    const articles = [];
 
-    const articles: { title: string; scrappingDate: string; articleDate: string; author: string; link: string; content: string }[] = [];
-
-    while (morePages && pageNumber <= maxPages) {
+    for (let page = 1; page <= maxPages; page++) {
         try {
-            const url = `https://www.cnnindonesia.com/search/?query=${encodeURIComponent(keyword)}&page=${pageNumber}`;
+            const response = await axios.get(`${baseUrl}?query=${encodeURIComponent(keyword)}&page=${page}`);
+            const $ = cheerio.load(response.data);
 
-            const { data } = await axios.get(url);
-            const $ = cheerio.load(data);
+            // Get all article links from the search results
+            const articleLinks = $('div.flex.flex-col.gap-5 article a[href]').map((_, element) => {
+                return $(element).attr('href');
+            }).get();
 
-            const articleElements = $('.list.media_rows.list-berita > article');
-
-            if (articleElements.length === 0) {
-                morePages = false;
-                continue;
-            }
-
-            for (let i = 0; i < articleElements.length; i++) {
-                const element = articleElements[i];
-                const title = $(element).find('h2.title').text().trim();
-                const link = $(element).find('a').attr('href') || '';
-
-                if (title && link) {
-                    console.log(`Mengambil artikel: ${title}`);
-                    const articleUrl = link.startsWith('http') ? link : `https://www.cnnindonesia.com${link}`;
-                    const articleData = await axios.get(articleUrl);
-                    const $$ = cheerio.load(articleData.data);
-
-                    // Mengambil konten artikel
-                    const content = $$('.detail_text').text().trim();
-                    
-                    // Mengambil waktu terbit artikel
-                    const publishTime = $$('div.date').text().trim();
-
-                    // Mengambil penulis artikel
-                    const authorElement = $$('.detail_text strong').last().text().trim();
-                    const author = authorElement || 'Tidak Diketahui';
-
-                    articles.push({
-                        title: title,
-                        scrappingDate: new Date().toISOString(),
-                        articleDate: publishTime,
-                        author: author,  // Menyimpan penulis di sini
-                        link: articleUrl,
-                        content: content
-                    });
+            for (const articleUrl of articleLinks) {
+                const articleDetails = await scrapeArticleDetails(articleUrl);
+                if (articleDetails) {
+                    articles.push(articleDetails);
                 }
             }
-
-            pageNumber += 1;
-
         } catch (error) {
-            console.error(`Error scraping CNN for keyword "${keyword}" on page ${pageNumber}: ${error}`);
-            morePages = false;
+            console.error(`Error scraping page ${page} for keyword "${keyword}":`, error);
         }
     }
 
-    saveToCSV(articles, keyword);
+    if (articles.length > 0) {
+        saveToCSV(articles, keyword);
+    }
 }
 
-// Save to csv
-function saveToCSV(articles: { title: string; scrappingDate: string; articleDate: string; author: string; link: string; content: string }[], keyword: string) {
-    if (articles.length === 0) {
-        console.log(`Tidak ada artikel yang ditemukan untuk kata kunci "${keyword}".`);
-        return;
-    }
+// Function to save articles data to a CSV file
+function saveToCSV(data: any[], keyword: string) {
+    const sanitizedKeyword = keyword.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+    const csvFilePath = path.join(outputDir, `${sanitizedKeyword}_scraped_articles.csv`);
+    const headers = 'Title,Scrapping Date,Article Date,Author,Link,Content\n';
+    const rows = data.map(article => (
+        `"${article.Title}","${article.ScrappingDate}","${article.ArticleDate}","${article.Author}","${article.Link}","${article.Content.replace(/"/g, '""')}"\n`
+    )).join('');
 
-    const directory = path.join(__dirname, 'scraped_articles');
-    if (!fs.existsSync(directory)) {
-        fs.mkdirSync(directory, { recursive: true });
-    }
+    fs.writeFileSync(csvFilePath, headers + rows, 'utf-8');
+    console.log(`Articles for keyword "${keyword}" saved to ${csvFilePath}`);
 
-    const csvPath = path.join(directory, `${keyword.replace(/ /g, '_')}_scraped_articles.csv`);
-    const createCsvWriter = csvWriter.createObjectCsvWriter;
-    const csv = createCsvWriter({
-        path: csvPath,
-        header: [
-            { id: 'title', title: 'Title' },
-            { id: 'scrappingDate', title: 'Scrapping Date' },
-            { id: 'articleDate', title: 'Article Date' },
-            { id: 'author', title: 'Author' },
-            { id: 'link', title: 'Link' },
-            { id: 'content', title: 'Content' }
-        ]
-    });
-
-    csv.writeRecords(articles)
-        .then(() => {
-            console.log(`Artikel telah berhasil disimpan ke ${csvPath}`);
-        })
-        .catch(error => {
-            console.error('Error menulis CSV:', error);
-        });
+    // Log the titles of the scraped articles
+    const logFilePath = path.join(outputDir, 'scraping_log.txt');
+    const logEntries = data.map(article => `Keyword: ${keyword}, Title: ${article.Title}`).join('\n') + '\n';
+    fs.appendFileSync(logFilePath, logEntries, 'utf-8');
 }
 
-// Run Scrap functions
-scrapeArticlesForKeywords().then(() => {
-    console.log('Scraping selesai.');
-}).catch(error => {
-    console.error(error);
-});
+// Start scraping for each keyword
+async function startScraping() {
+    for (const keyword of keywords) {
+        console.log(`Scraping articles for keyword: ${keyword}`);
+        await scrapeCNNArticles(keyword, maxPages);
+    }
+    console.log('Scraping completed.');
+}
+
+startScraping();

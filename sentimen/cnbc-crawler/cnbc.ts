@@ -19,7 +19,7 @@ const keywords = [
     'Pemerintah Indonesia', 'Sentimen Investor'
 ];
 
-const maxPages = 1;
+const maxPages = 1000;
 
 async function scrapeArticlesForKeywords() {
     for (const keyword of keywords) {
@@ -91,7 +91,7 @@ async function scrapeArticlesFromTagPage(keyword: string) {
             pageNumber += 1;
 
             if (pageNumber > maxPages) {
-                console.log(`Maximum pages reached for keyword "${keyword}". Stopping...`);
+                console.log(`Maximum pages reached for keyword "${keyword}". Stopping... at page ${pageNumber}`);
                 morePages = false;
             }
 

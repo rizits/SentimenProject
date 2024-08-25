@@ -38,26 +38,139 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var axios_1 = require("axios");
 var cheerio = require("cheerio");
-var path = require("path");
 var fs = require("fs");
-var csvWriter = require("csv-writer");
+var path = require("path");
+// List of keywords to search
 var keywords = [
-    //'pinjaman pemerintah', 'surat utang', 'investor asing', 'sbn ritel', 'sukuk',
-    //'surat berharga negara', 'kreditur pemerintah', 'ori', 'pasar obligasi', 
-    //'obligasi negara', 'inflasi', 'suku bunga', 'sun', 'jatuh tempo', 
-    //'nilai tukar', 'kepemilikan asing', 'yield', 'ust', 'us treasury', 
-    //'surat utang negara', 'obligasi pemerintah', 'obligasi ritel indonesia', 
-    //'kebijakan moneter', 'likuiditas pasar', 'imbal hasil', 'pasar global',
     'rating kredit', 'sentimen pasar', 'pasar sekunder', 'Obligasi Negara',
-    'Surat Utang Negara', 'Pergerakan Yield', 'Analisis Sentimen',
-    'Yield Obligasi', 'Pasar Obligasi', 'Kinerja Obligasi', 'Tren Yield',
-    'Pengaruh Makroekonomi', 'Kondisi Ekonomi', 'Suku Bunga',
-    'Kebijakan Moneter', 'Inflasi', 'Pasar Keuangan', 'Volatilitas Pasar',
-    'Pergerakan Suku Bunga', 'Imbal Hasil', 'Krisis Keuangan',
-    'Pemerintah Indonesia', 'Sentimen Investor'
+    'Surat Utang Negara', 'Pergerakan Yield', 'Analisis Sentimen', 'Yield Obligasi',
+    'Pasar Obligasi', 'Kinerja Obligasi', 'Tren Yield', 'Pengaruh Makroekonomi',
+    'Kondisi Ekonomi', 'Suku Bunga', 'Kebijakan Moneter', 'Inflasi',
+    'Pasar Keuangan', 'Volatilitas Pasar', 'Pergerakan Suku Bunga',
+    'Imbal Hasil', 'Krisis Keuangan', 'Pemerintah Indonesia', 'Sentimen Investor'
 ];
-var maxPages = 5; // Sesuaikan sesuai kebutuhan
-function scrapeArticlesForKeywords() {
+// Maximum number of pages to scrape for each keyword
+var maxPages = 10;
+// Create the output directory if it doesn't exist
+var outputDir = path.join(__dirname, 'scraped_articles');
+if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir);
+}
+// Function to scrape the details of a single article
+function scrapeArticleDetails(url) {
+    return __awaiter(this, void 0, void 0, function () {
+        var response, $, title, scrappingDate, articleDate, author, content, error_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    return [4 /*yield*/, axios_1.default.get(url)];
+                case 1:
+                    response = _a.sent();
+                    $ = cheerio.load(response.data);
+                    title = $('h1').text().trim();
+                    scrappingDate = new Date().toISOString();
+                    articleDate = $('div.text-cnn_grey.text-sm.mb-4').text().trim();
+                    author = $('div.text-cnn_black_light3.text-sm.mb-2.5').text().split('|')[0].trim();
+                    content = $('div.detail-text').text().trim();
+                    return [2 /*return*/, {
+                            Title: title,
+                            ScrappingDate: scrappingDate,
+                            ArticleDate: articleDate,
+                            Author: author,
+                            Link: url,
+                            Content: content
+                        }];
+                case 2:
+                    error_1 = _a.sent();
+                    console.error("Error scraping article details from ".concat(url, ":"), error_1);
+                    return [2 /*return*/, null];
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
+}
+// Function to scrape articles from search results pages
+function scrapeCNNArticles(keyword, maxPages) {
+    return __awaiter(this, void 0, void 0, function () {
+        var baseUrl, articles, _loop_1, page;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    baseUrl = 'https://www.cnnindonesia.com/search/';
+                    articles = [];
+                    _loop_1 = function (page) {
+                        var response, $_1, articleLinks, _i, articleLinks_1, articleUrl, articleDetails, error_2;
+                        return __generator(this, function (_b) {
+                            switch (_b.label) {
+                                case 0:
+                                    _b.trys.push([0, 6, , 7]);
+                                    return [4 /*yield*/, axios_1.default.get("".concat(baseUrl, "?query=").concat(encodeURIComponent(keyword), "&page=").concat(page))];
+                                case 1:
+                                    response = _b.sent();
+                                    $_1 = cheerio.load(response.data);
+                                    articleLinks = $_1('div.flex.flex-col.gap-5 article a[href]').map(function (_, element) {
+                                        return $_1(element).attr('href');
+                                    }).get();
+                                    _i = 0, articleLinks_1 = articleLinks;
+                                    _b.label = 2;
+                                case 2:
+                                    if (!(_i < articleLinks_1.length)) return [3 /*break*/, 5];
+                                    articleUrl = articleLinks_1[_i];
+                                    return [4 /*yield*/, scrapeArticleDetails(articleUrl)];
+                                case 3:
+                                    articleDetails = _b.sent();
+                                    if (articleDetails) {
+                                        articles.push(articleDetails);
+                                    }
+                                    _b.label = 4;
+                                case 4:
+                                    _i++;
+                                    return [3 /*break*/, 2];
+                                case 5: return [3 /*break*/, 7];
+                                case 6:
+                                    error_2 = _b.sent();
+                                    console.error("Error scraping page ".concat(page, " for keyword \"").concat(keyword, "\":"), error_2);
+                                    return [3 /*break*/, 7];
+                                case 7: return [2 /*return*/];
+                            }
+                        });
+                    };
+                    page = 1;
+                    _a.label = 1;
+                case 1:
+                    if (!(page <= maxPages)) return [3 /*break*/, 4];
+                    return [5 /*yield**/, _loop_1(page)];
+                case 2:
+                    _a.sent();
+                    _a.label = 3;
+                case 3:
+                    page++;
+                    return [3 /*break*/, 1];
+                case 4:
+                    if (articles.length > 0) {
+                        saveToCSV(articles, keyword);
+                    }
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+// Function to save articles data to a CSV file
+function saveToCSV(data, keyword) {
+    var sanitizedKeyword = keyword.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+    var csvFilePath = path.join(outputDir, "".concat(sanitizedKeyword, "_scraped_articles.csv"));
+    var headers = 'Title,Scrapping Date,Article Date,Author,Link,Content\n';
+    var rows = data.map(function (article) { return ("\"".concat(article.Title, "\",\"").concat(article.ScrappingDate, "\",\"").concat(article.ArticleDate, "\",\"").concat(article.Author, "\",\"").concat(article.Link, "\",\"").concat(article.Content.replace(/"/g, '""'), "\"\n")); }).join('');
+    fs.writeFileSync(csvFilePath, headers + rows, 'utf-8');
+    console.log("Articles for keyword \"".concat(keyword, "\" saved to ").concat(csvFilePath));
+    // Log the titles of the scraped articles
+    var logFilePath = path.join(outputDir, 'scraping_log.txt');
+    var logEntries = data.map(function (article) { return "Keyword: ".concat(keyword, ", Title: ").concat(article.Title); }).join('\n') + '\n';
+    fs.appendFileSync(logFilePath, logEntries, 'utf-8');
+}
+// Start scraping for each keyword
+function startScraping() {
     return __awaiter(this, void 0, void 0, function () {
         var _i, keywords_1, keyword;
         return __generator(this, function (_a) {
@@ -69,132 +182,18 @@ function scrapeArticlesForKeywords() {
                     if (!(_i < keywords_1.length)) return [3 /*break*/, 4];
                     keyword = keywords_1[_i];
                     console.log("Scraping articles for keyword: ".concat(keyword));
-                    return [4 /*yield*/, scrapeArticlesFromSearchPage(keyword)];
+                    return [4 /*yield*/, scrapeCNNArticles(keyword, maxPages)];
                 case 2:
                     _a.sent();
                     _a.label = 3;
                 case 3:
                     _i++;
                     return [3 /*break*/, 1];
-                case 4: return [2 /*return*/];
-            }
-        });
-    });
-}
-function scrapeArticlesFromSearchPage(keyword) {
-    return __awaiter(this, void 0, void 0, function () {
-        var pageNumber, morePages, articles, url, data, $, articleElements, _i, _a, element, $element, title, link, articleUrl, articleData, $$, content, publishTime, authorElement, author, articleError_1, error_1;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
-                case 0:
-                    pageNumber = 1;
-                    morePages = true;
-                    articles = [];
-                    _b.label = 1;
-                case 1:
-                    if (!(morePages && pageNumber <= maxPages)) return [3 /*break*/, 12];
-                    _b.label = 2;
-                case 2:
-                    _b.trys.push([2, 10, , 11]);
-                    url = "https://www.cnnindonesia.com/search/?query=".concat(encodeURIComponent(keyword), "&page=").concat(pageNumber);
-                    console.log("Requesting URL: ".concat(url));
-                    return [4 /*yield*/, axios_1.default.get(url)];
-                case 3:
-                    data = (_b.sent()).data;
-                    $ = cheerio.load(data);
-                    articleElements = $('.grow-0.w-leftcontent.min-w-0 article');
-                    if (articleElements.length === 0) {
-                        console.log('No more articles found.');
-                        morePages = false;
-                        return [3 /*break*/, 1];
-                    }
-                    _i = 0, _a = articleElements.toArray();
-                    _b.label = 4;
                 case 4:
-                    if (!(_i < _a.length)) return [3 /*break*/, 9];
-                    element = _a[_i];
-                    $element = $(element);
-                    title = $element.find('h2').text().trim();
-                    link = $element.find('a').attr('href') || '';
-                    if (!(title && link)) return [3 /*break*/, 8];
-                    console.log("Fetching article: ".concat(title));
-                    articleUrl = link.startsWith('http') ? link : "https://www.cnnindonesia.com".concat(link);
-                    _b.label = 5;
-                case 5:
-                    _b.trys.push([5, 7, , 8]);
-                    return [4 /*yield*/, axios_1.default.get(articleUrl)];
-                case 6:
-                    articleData = _b.sent();
-                    $$ = cheerio.load(articleData.data);
-                    content = $$('.detail_text').text().trim();
-                    publishTime = $$('.date').text().trim();
-                    authorElement = $$('.detail_text strong').last().text().trim();
-                    author = authorElement || 'Tidak Diketahui';
-                    articles.push({
-                        title: title,
-                        scrappingDate: new Date().toISOString(),
-                        articleDate: publishTime,
-                        author: author,
-                        link: articleUrl,
-                        content: content
-                    });
-                    return [3 /*break*/, 8];
-                case 7:
-                    articleError_1 = _b.sent();
-                    console.error("Error fetching article at \"".concat(articleUrl, "\": ").concat(articleError_1));
-                    return [3 /*break*/, 8];
-                case 8:
-                    _i++;
-                    return [3 /*break*/, 4];
-                case 9:
-                    pageNumber += 1;
-                    return [3 /*break*/, 11];
-                case 10:
-                    error_1 = _b.sent();
-                    console.error("Error scraping page ".concat(pageNumber, ": ").concat(error_1));
-                    morePages = false;
-                    return [3 /*break*/, 11];
-                case 11: return [3 /*break*/, 1];
-                case 12:
-                    saveToCSV(articles, keyword);
+                    console.log('Scraping completed.');
                     return [2 /*return*/];
             }
         });
     });
 }
-function saveToCSV(articles, keyword) {
-    if (articles.length === 0) {
-        console.log("No articles found for keyword \"".concat(keyword, "\"."));
-        return;
-    }
-    var directory = path.join(__dirname, 'scraped_articles');
-    if (!fs.existsSync(directory)) {
-        fs.mkdirSync(directory, { recursive: true });
-    }
-    var csvPath = path.join(directory, "".concat(keyword.replace(/ /g, '_'), "_scraped_articles.csv"));
-    var createCsvWriter = csvWriter.createObjectCsvWriter;
-    var csv = createCsvWriter({
-        path: csvPath,
-        header: [
-            { id: 'title', title: 'Title' },
-            { id: 'scrappingDate', title: 'Scrapping Date' },
-            { id: 'articleDate', title: 'Article Date' },
-            { id: 'author', title: 'Author' },
-            { id: 'link', title: 'Link' },
-            { id: 'content', title: 'Content' }
-        ]
-    });
-    csv.writeRecords(articles)
-        .then(function () {
-        console.log("Articles successfully saved to ".concat(csvPath));
-    })
-        .catch(function (error) {
-        console.error('Error writing CSV:', error);
-    });
-}
-// Run Scrap functions
-scrapeArticlesForKeywords().then(function () {
-    console.log('Scraping completed.');
-}).catch(function (error) {
-    console.error(error);
-});
+startScraping();

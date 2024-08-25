@@ -36,7 +36,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var axios_1 = require("axios");
+cdcdcdcdcdcdcdcimport;
+axios;
+from;
+'axios';
 var cheerio = require("cheerio");
 var path = require("path");
 var csvWriter = require("csv-writer");
@@ -77,7 +80,7 @@ function scrapeArticlesFromTagPage(keyword) {
                 case 0:
                     _a.trys.push([0, 6, , 7]);
                     url = "https://www.cnnindonesia.com/tag/".concat(encodeURIComponent(keyword));
-                    return [4 /*yield*/, axios_1.default.get(url)];
+                    return [4 /*yield*/, axios.get(url)];
                 case 1:
                     data = (_a.sent()).data;
                     $ = cheerio.load(data);
@@ -93,7 +96,7 @@ function scrapeArticlesFromTagPage(keyword) {
                     if (!(title && link)) return [3 /*break*/, 4];
                     console.log("Mengambil artikel: ".concat(title));
                     articleUrl = link.startsWith('http') ? link : "https://www.cnnindonesia.com".concat(link);
-                    return [4 /*yield*/, axios_1.default.get(articleUrl)];
+                    return [4 /*yield*/, axios.get(articleUrl)];
                 case 3:
                     articleData = _a.sent();
                     $$ = cheerio.load(articleData.data);

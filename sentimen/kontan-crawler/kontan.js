@@ -42,9 +42,20 @@ var path = require("path");
 var fs = require("fs");
 var csv_writer_1 = require("csv-writer");
 var keywords = [
-    'pinjaman pemerintah', 'surat utang', 'investor asing', 'wakaf'
+    'pinjaman pemerintah', 'surat utang', 'investor asing', 'sbn ritel', 'sukuk',
+    'surat berharga negara', 'kreditur pemerintah', 'ori', 'pasar obligasi',
+    'obligasi negara', 'inflasi', 'suku bunga', 'sun', 'jatuh tempo',
+    'nilai tukar', 'kepemilikan asing', 'yield', 'ust', 'us treasury',
+    'surat utang negara', 'obligasi pemerintah', 'obligasi ritel indonesia',
+    'kebijakan moneter', 'likuiditas pasar', 'imbal hasil', 'pasar global',
+    'rating kredit', 'sentimen pasar', 'pasar sekunder', 'Obligasi Negara',
+    'Surat Utang Negara', 'Pergerakan Yield', 'Analisis Sentimen', 'Yield Obligasi',
+    'Pasar Obligasi', 'Kinerja Obligasi', 'Tren Yield', 'Pengaruh Makroekonomi',
+    'Kondisi Ekonomi', 'Suku Bunga', 'Kebijakan Moneter', 'Inflasi', 'Pasar Keuangan',
+    'Volatilitas Pasar', 'Pergerakan Suku Bunga', 'Imbal Hasil', 'Krisis Keuangan',
+    'Pemerintah Indonesia', 'Sentimen Investor'
 ];
-var maxPages = 1;
+var maxPages = 1000;
 function scrapeArticlesForKeywords() {
     return __awaiter(this, void 0, void 0, function () {
         var _i, keywords_1, keyword;
@@ -82,10 +93,16 @@ function scrapeArticlesFromTagPage(keyword) {
                     _b.label = 1;
                 case 1:
                     if (!morePages) return [3 /*break*/, 12];
+                    url = void 0;
+                    if (pageNumber === 1 || pageNumber === 2) {
+                        url = "https://www.kontan.co.id/search/?search=".concat(encodeURIComponent(keyword), "&per_page=").concat(pageNumber * 10);
+                    }
+                    else {
+                        url = "https://www.kontan.co.id/search/?search=".concat(encodeURIComponent(keyword), "&per_page=").concat((pageNumber - 1) * 20);
+                    }
                     _b.label = 2;
                 case 2:
                     _b.trys.push([2, 10, , 11]);
-                    url = "https://www.kontan.co.id/search/?search=".concat(encodeURIComponent(keyword), "&per_page=").concat(pageNumber);
                     console.log("Scraping URL: ".concat(url));
                     return [4 /*yield*/, axios_1.default.get(url)];
                 case 3:
@@ -137,11 +154,10 @@ function scrapeArticlesFromTagPage(keyword) {
                     if (!newArticleFound) {
                         console.log("No new articles found for keyword \"".concat(keyword, "\" at page ").concat(pageNumber, ". Stopping..."));
                         morePages = false;
-                        return [3 /*break*/, 12];
                     }
                     pageNumber += 1;
                     if (pageNumber > maxPages) {
-                        console.log("Maximum pages reached for keyword \"".concat(keyword, "\". Stopping..."));
+                        console.log("Maximum pages reached for keyword \"".concat(keyword, "\". Stopping... at page \"").concat(pageNumber, "\""));
                         morePages = false;
                     }
                     return [3 /*break*/, 11];

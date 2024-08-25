@@ -18,7 +18,7 @@ const keywords = [
     'Volatilitas Pasar', 'Pergerakan Suku Bunga', 'Imbal Hasil', 'Krisis Keuangan',
     'Pemerintah Indonesia', 'Sentimen Investor'
 ];
-const maxPages = 1;
+const maxPages = 1000;
 
 async function scrapeArticlesForKeywords() {
     for (const keyword of keywords) {
@@ -35,8 +35,15 @@ async function scrapeArticlesFromTagPage(keyword: string) {
     const articles: { title: string; scrappingDate: string; articleDate: string; author: string; link: string; content: string; category: string }[] = [];
 
     while (morePages) {
+        let url: string; // Declare the URL variable outside of the conditional blocks
+
+        if (pageNumber === 1 || pageNumber === 2) {
+            url = `https://www.kontan.co.id/search/?search=${encodeURIComponent(keyword)}&per_page=${pageNumber * 10}`;
+        } else {
+            url = `https://www.kontan.co.id/search/?search=${encodeURIComponent(keyword)}&per_page=${(pageNumber - 1) * 20}`;
+        }
+
         try {
-            const url = `https://www.kontan.co.id/search/?search=${encodeURIComponent(keyword)}&per_page=${pageNumber}`;
             console.log(`Scraping URL: ${url}`);
 
             const { data } = await axios.get(url);
@@ -49,7 +56,7 @@ async function scrapeArticlesFromTagPage(keyword: string) {
                 const element = articleElements[i];
                 const title = $(element).find('.sp-hl a').text().trim(); // Adjusted selector for title
                 const link = $(element).find('.sp-hl a').attr('href') || ''; // Adjusted selector for link
-                const category = $(element).find('span.linkto-orange.hrf-gede.mar-r-5 a').text().trim(); 
+                const category = $(element).find('span.linkto-orange.hrf-gede.mar-r-5 a').text().trim();
 
                 if (title && link) {
                     // Correcting the link by removing 'www.kontan.co.id' and replacing it with the appropriate base domain
@@ -66,7 +73,7 @@ async function scrapeArticlesFromTagPage(keyword: string) {
 
                     try {
                         const { content, author, publishTime } = await scrapeArticleContent(fullLink, category);
-                    
+
                         articles.push({
                             title: title,
                             category: category,
@@ -76,7 +83,7 @@ async function scrapeArticlesFromTagPage(keyword: string) {
                             link: fullLink,
                             content: content || ''
                         });
-                    
+
                     } catch (error) {
                         console.error(`Error fetching article content from ${fullLink}:`, error);
                     }
@@ -86,13 +93,12 @@ async function scrapeArticlesFromTagPage(keyword: string) {
             if (!newArticleFound) {
                 console.log(`No new articles found for keyword "${keyword}" at page ${pageNumber}. Stopping...`);
                 morePages = false;
-                break;
             }
 
             pageNumber += 1;
 
             if (pageNumber > maxPages) {
-                console.log(`Maximum pages reached for keyword "${keyword}". Stopping...`);
+                console.log(`Maximum pages reached for keyword "${keyword}". Stopping... at page "${pageNumber}"`);
                 morePages = false;
             }
 
