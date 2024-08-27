@@ -1,36 +1,3 @@
-Title,Scrapping Date,Article Date,Author,Link,Content
-Mansek Ungkap Kepemilikan BI atas Surat Utang Negara Rendah,2024-08-19T16:19:54.599Z,"Kamis, 02 Jul 2020 15:52 WIB",(ulf/sfr),https://www.cnnindonesia.com/ekonomi/20200702135744-532-520039/mansek-ungkap-kepemilikan-bi-atas-surat-utang-negara-rendah,"Jakarta, CNN Indonesia -- PT Mandiri Sekuritas (Mansek) mencatat kepemilikan surat utang (obligasi) pemerintah oleh Bank Indonesia (BI) masih rendah dibandingkan dengan sejumlah negara lain.Head of Fix Income Research Mandiri Sekuritas Handy Yunianto mengatakan kepemilikan surat utang pemerintah oleh bank sentral baru sebesar 9 persen dari total penerbitan.""Datanya kepemilikan obligasi pemerintah oleh bank sentral Indonesia relatif lebih rendah dibandingkan Brasil dan negara maju lainnya seperti Jepang, Eropa, dan AS,"" ujarnya, Kamis (2/7).
-@import url(""https://cdnstatic.detik.com/live/_rmbassets/2022/parallax/parallax.css"");
-
-
-
-ADVERTISEMENT
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-SCROLL TO CONTINUE WITH CONTENT
-
-
-function paraA(e) {
-var p = $(e);
-$(e + "" .para_fix"").width(p.width());
-}
-$("".paraA iframe"").on(""load"", paraA("".paraA""));
-
-Lihat juga:Sri Mulyani Proyeksi Rasio Utang Pemerintah Tembus 37 PersenLebih rinci, ia memaparkan kepemilikan surat utang pemerintah oleh bank sentral Jepang sebesar 43 persen, lalu Brasil 29,3 persen, Eropa 29 persen, dan AS 21 persen.Namun, kepemilikan surat utang pemerintah BI lebih tinggi dibandingkan bank sentral India sebesar 7,4 persen, Thailand 6,5 persen, Filipina 5,3 persen, China 2,8 persen, dan Rusia 2 persen. Bahkan, sejumlah negara mencatat kepemilikan surat utang pemerintah oleh bank sentral hanya 1 persen, yaitu Turki tepatnya 1,8 persen, Afrika Selatan 1,2 persen, dan Malaysia hanya 0,2 persen.Selama ini, dalam Undang-undang Nomor 6 Tahun 2009 tentang BI disebutkan bahwa bank sentral dilarang membeli surat utang di pasar primer. Pasalnya, hal tersebut akan menimbulkan kenaikan uang beredar sehingga berdampak pada inflasi.Dalam menghadapi dampak covid-19 kepada perekonomian, pemerintah telah mengeluarkan kebijakan salah satunya memperbolehkan bank sentral membeli surat utang di pasar primer. Ini tertuang dalam Perppu Nomor 1 tahun 2020 tentang Kebijakan Keuangan Negara dan Stabilitas Sistem Keuangan untuk Penanganan Pandemi Covid-19.Lihat juga:Bos BUMN Karya Ungkap Utang Triliunan Rupiah PemerintahMenurut Handy, kebijakan serupa juga diambil oleh sejumlah negara seperti India, Malaysia, Myanmar, Filipina, dan Thailand. Ia menilai kebijakan extraordinary itu harus ditempuh lantaran Covid-19 memberikan ketidakpastian hingga vaksinnya ditemukan.""Sebenarnya ini memang butuh extraordinary measure (langkah luar biasa). Jadi bank sentral harus melakukan pembelian. Ini tidak hanya terjadi di Indonesia, bahkan di negara maju,"" ucapnya.Sebelumnya, Menteri Perencanaan Pembangunan Nasional (PPN) sekaligus Kepala Bappenas Suharso Monoarfa menyatakan sempat merancang skenario pembiayaan fiskal untuk mengatasi tekanan virus corona. Dalam skenario itu, BI membeli Surat Berharga Negara (SBN) senilai Rp1.595 triliun dalam beberapa tahun ke depan.Alternatif itu merupakan skenario pembagian beban (burden sharing) antara pemerintah dengan bank sentral nasional akibat tekanan pandemi virus corona atau covid-19.""Saya punya ide, punya gagasan yang mudah-mudahan bisa dilihat. Ada dua alternatif, salah satunya bunga khusus dari 4,5 persen sampai 0,1 persen (per tahun untuk pembelian SBN oleh BI),"" ujar Suharso saat rapat bersama DPR dan BI belum lama ini.[Gambas:Video CNN] (ulf/sfr)"
+version https://git-lfs.github.com/spec/v1
+oid sha256:168d010562d443fd36e21778efacc5d5cb5a823fcfc4dbf633da0c161342717b
+size 3570
