@@ -5,18 +5,26 @@ import * as fs from 'fs';
 import { createObjectCsvWriter } from 'csv-writer';
 
 const keywords = [
-    'pinjaman pemerintah', 'surat utang', 'investor asing', 'sbn ritel', 'sukuk',
-    'surat berharga negara', 'kreditur pemerintah', 'ori', 'pasar obligasi',
-    'obligasi negara', 'inflasi', 'suku bunga', 'sun', 'jatuh tempo',
-    'nilai tukar', 'kepemilikan asing', 'yield', 'ust', 'us treasury',
-    'surat utang negara', 'obligasi pemerintah', 'obligasi ritel indonesia',
-    'kebijakan moneter', 'likuiditas pasar', 'imbal hasil', 'pasar global',
-    'rating kredit', 'sentimen pasar', 'pasar sekunder', 'Obligasi Negara',
-    'Surat Utang Negara', 'Pergerakan Yield', 'Analisis Sentimen', 'Yield Obligasi',
-    'Pasar Obligasi', 'Kinerja Obligasi', 'Tren Yield', 'Pengaruh Makroekonomi',
-    'Kondisi Ekonomi', 'Suku Bunga', 'Kebijakan Moneter', 'Inflasi', 'Pasar Keuangan',
-    'Volatilitas Pasar', 'Pergerakan Suku Bunga', 'Imbal Hasil', 'Krisis Keuangan',
-    'Pemerintah Indonesia', 'Sentimen Investor'
+    // 'pinjaman pemerintah', 'surat utang', 'investor asing', 'sbn ritel', 'sukuk',
+    // 'surat berharga negara', 'kreditur pemerintah', 'ori', 'pasar obligasi',
+    // 'obligasi negara', 'inflasi', 'suku bunga', 'sun', 'jatuh tempo',
+    // 'nilai tukar', 'kepemilikan asing', 'yield', 'ust', 'us treasury',
+    // 'surat utang negara', 'obligasi pemerintah', 'obligasi ritel indonesia',
+    // 'kebijakan moneter', 'likuiditas pasar', 'imbal hasil', 'pasar global',
+    // 'rating kredit', 'sentimen pasar', 'pasar sekunder', 'Obligasi Negara',
+    // 'Surat Utang Negara', 'Pergerakan Yield', 'Analisis Sentimen', 'Yield Obligasi',
+    // 'Pasar Obligasi', 'Kinerja Obligasi', 'Tren Yield', 'Pengaruh Makroekonomi',
+    // 'Kondisi Ekonomi', 'Suku Bunga', 'Kebijakan Moneter', 'Inflasi', 'Pasar Keuangan',
+    // 'Volatilitas Pasar', 'Pergerakan Suku Bunga', 'Imbal Hasil', 'Krisis Keuangan',
+    // 'Pemerintah Indonesia', 'Sentimen Investor'
+    // 'Lelang SUN', 'Lelang SBN', 'Lelang SBSN', 'Kebijakan fiskal', 'Defisit', 
+    // 'APBN', 'Defisit fiskal', 'Defisit APBN', 'Pembiayaan', 'Pembiayaan defisit', 
+    // 'Pembiayaan APBN', 'Pembiayaan utang', 'Pembiayaan infrastruktur', 'Risiko pasar', 
+    'Risiko utang', 'Risiko fiskal', 'Risiko likuiditas', 'Utang negara', 'Utang pemerintah', 
+    'Harga SUN', 'Harga SBN', 'Transaksi SUN', 'Transaksi SBN', 'Penerbitan SUN', 
+    'Penerbitan SBN', 'Penerbitan obligasi negara', 'Yield SUN', 'Yield SBN', 'Bunga utang', 
+    'Bunga SUN', 'Bunga SBN', 'Rasio utang', 'Pertumbuhan ekonomi', 'Keseimbangan primer', 
+    'Portofolio utang', 'Portofolio SUN'
 ];
 
 const maxPages = 1000;
@@ -130,12 +138,12 @@ function saveToCSV(articles: { title: string; scrappingDate: string; articleDate
         return;
     }
 
-    const directory = path.join(__dirname, 'scraped_articles');
+    const directory = path.join(__dirname, 'part_2_scraped_articles');
     if (!fs.existsSync(directory)) {
         fs.mkdirSync(directory, { recursive: true });
     }
 
-    const csvPath = path.join(directory, `${keyword.replace(/ /g, '_')}_scraped_articles.csv`);
+    const csvPath = path.join(directory, `${keyword.replace(/ /g, '_')}_cnbc_articles.csv`);
     const csv = createObjectCsvWriter({
         path: csvPath,
         header: [

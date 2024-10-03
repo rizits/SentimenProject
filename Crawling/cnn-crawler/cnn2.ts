@@ -1,109 +1,131 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import * as fs from 'fs';
 import * as path from 'path';
+import * as csvWriter from 'csv-writer';
 
-// List of keywords to search
+// Daftar kata kunci
 const keywords = [
-    'rating kredit', 'sentimen pasar', 'pasar sekunder', 'Obligasi Negara', 
-    'Surat Utang Negara', 'Pergerakan Yield', 'Analisis Sentimen', 'Yield Obligasi', 
-    'Pasar Obligasi', 'Kinerja Obligasi', 'Tren Yield', 'Pengaruh Makroekonomi', 
-    'Kondisi Ekonomi', 'Suku Bunga', 'Kebijakan Moneter', 'Inflasi', 
-    'Pasar Keuangan', 'Volatilitas Pasar', 'Pergerakan Suku Bunga', 
-    'Imbal Hasil', 'Krisis Keuangan', 'Pemerintah Indonesia', 'Sentimen Investor'
+    // 'pinjaman pemerintah', 'surat utang', 'investor asing', 'wakaf', 'sbn ritel',
+    // 'surat berharga syariah negara', 'sbsn', 'pembiayaan', 'sukuk', 'hibah',
+    // 'surat berharga negara', 'kreditur pemerintah', 'pdn', 'ekspor', 'aset',
+    // 'penjamin', 'risiko kredit', 'ori', 'pasar obligasi', 'obligasi negara',
+    // 'inflasi', 'suku bunga', 'sun', 'jatuh tempo', 'nilai tukar', 'kepemilikan asing',
+    // 'yield', 'ust', 'us treasury', 'surat utang negara', 'obligasi pemerintah',
+    // 'obligasi ritel indonesia', 'sbn', 'kebijakan moneter', 'likuiditas pasar',
+    // 'imbal hasil', 'pasar global', 'rating kredit', 'sentimen pasar', 'pasar sekunder',
+    // 'economic growth', 'inflation rates', 'interest rates', 'monetary policy',
+    // 'geopolitical tensions', 'market volatility', 'risk appetite', 'safe haven demand',
+    // 'credit ratings', 'economic indicators', 'global trade', 'currency earnings',
+    // 'currency fluctuations', 'commodity prices', 'fiscal policy', 'debt levels',
+    // 'liquidity conditions', 'global supply chains', 'political events', 'investors sentiments'
+    'Lelang SUN', 'Lelang SBN', 'Lelang SBSN', 'Kebijakan fiskal', 'Defisit', 
+    'APBN', 'Defisit fiskal', 'Defisit APBN', 'Pembiayaan', 'Pembiayaan defisit', 
+    'Pembiayaan APBN', 'Pembiayaan utang', 'Pembiayaan infrastruktur', 'Risiko pasar', 
+    'Risiko utang', 'Risiko fiskal', 'Risiko likuiditas', 'Utang negara', 'Utang pemerintah', 
+    'Harga SUN', 'Harga SBN', 'Transaksi SUN', 'Transaksi SBN', 'Penerbitan SUN', 
+    'Penerbitan SBN', 'Penerbitan obligasi negara', 'Yield SUN', 'Yield SBN', 'Bunga utang', 
+    'Bunga SUN', 'Bunga SBN', 'Rasio utang', 'Pertumbuhan ekonomi', 'Keseimbangan primer', 
+    'Portofolio utang', 'Portofolio SUN'
 ];
 
-// Maximum number of pages to scrape for each keyword
-const maxPages = 10;
+const maxPages = 10000; // Maksimum halaman
 
-// Create the output directory if it doesn't exist
-const outputDir = path.join(__dirname, 'scraped_articles');
-if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir);
-}
-
-// Function to scrape the details of a single article
-async function scrapeArticleDetails(url: string) {
-    try {
-        const response = await axios.get(url);
-        const $ = cheerio.load(response.data);
-
-        const title = $('h1').text().trim();
-        const scrappingDate = new Date().toISOString();
-        const articleDate = $('div.text-cnn_grey.text-sm.mb-4').text().trim();
-        const author = $('div.text-cnn_black_light3.text-sm.mb-2.5').text().split('|')[0].trim();
-        const content = $('div.detail-text').text().trim();
-
-        return {
-            Title: title,
-            ScrappingDate: scrappingDate,
-            ArticleDate: articleDate,
-            Author: author,
-            Link: url,
-            Content: content
-        };
-    } catch (error) {
-        console.error(`Error scraping article details from ${url}:`, error);
-        return null;
+// Fungsi utama untuk scraping
+async function scrapeArticlesForKeywords() {
+    for (const keyword of keywords) {
+        console.log(`Scraping articles for keyword: ${keyword}`);
+        await scrapeArticlesFromTagPage(keyword);
     }
 }
 
-// Function to scrape articles from search results pages
-async function scrapeCNNArticles(keyword: string, maxPages: number) {
-    const baseUrl = 'https://www.cnnindonesia.com/search/';
-    const articles = [];
+async function scrapeArticlesFromTagPage(keyword: string) {
+    let pageNumber = 1;
+    let morePages = true;
 
-    for (let page = 1; page <= maxPages; page++) {
+    const articles: { title: string; publishTime: string; website: string; content: string }[] = [];
+
+    while (morePages && pageNumber <= maxPages) {
         try {
-            const response = await axios.get(`${baseUrl}?query=${encodeURIComponent(keyword)}&page=${page}`);
-            const $ = cheerio.load(response.data);
+            const url = `https://www.cnnindonesia.com/tag/${encodeURIComponent(keyword)}/${pageNumber}`;
 
-            // Get all article links from the search results
-            const articleLinks = $('div.flex.flex-col.gap-5 article a[href]').map((_, element) => {
-                return $(element).attr('href');
-            }).get();
+            const { data } = await axios.get(url);
+            const $ = cheerio.load(data);
 
-            for (const articleUrl of articleLinks) {
-                const articleDetails = await scrapeArticleDetails(articleUrl);
-                if (articleDetails) {
-                    articles.push(articleDetails);
+            const articleElements = $('.flex.flex-col.gap-5 > article');
+
+            if (articleElements.length === 0) {
+                morePages = false;
+                continue;
+            }
+
+            for (let i = 0; i < articleElements.length; i++) {
+                const element = articleElements[i];
+                const title = $(element).find('h2').text().trim();
+                const link = $(element).find('a').attr('href') || '';
+
+                if (title && link) {
+                    console.log(`Mengambil artikel: ${title}`);
+                    const articleUrl = link.startsWith('http') ? link : `https://www.cnnindonesia.com${link}`;
+                    const articleData = await axios.get(articleUrl);
+                    const $$ = cheerio.load(articleData.data);
+
+                    // Mengambil konten artikel
+                    const content = $$('.detail-text.text-cnn_black.text-sm.grow.min-w-0').text().trim();
+                    
+                    // Mengambil waktu terbit artikel
+                    const publishTime = $$('div.text-cnn_grey.text-sm.mb-4').text().trim();
+
+                    articles.push({
+                        title: title,
+                        publishTime: publishTime,
+                        website: 'CNN Indonesia',
+                        content: content
+                    });
                 }
             }
+
+            pageNumber += 1;
+
         } catch (error) {
-            console.error(`Error scraping page ${page} for keyword "${keyword}":`, error);
+            console.error(`Error scraping CNN for keyword "${keyword}" on page ${pageNumber}: ${error}`);
+            morePages = false;
         }
     }
 
-    if (articles.length > 0) {
-        saveToCSV(articles, keyword);
+    saveToCSV(articles, keyword);
+}
+
+// Fungsi untuk menyimpan hasil scraping ke file CSV
+function saveToCSV(articles: { title: string; publishTime: string; website: string; content: string }[], keyword: string) {
+    if (articles.length === 0) {
+        console.log(`Tidak ada artikel yang ditemukan untuk kata kunci "${keyword}".`);
+        return;
     }
+
+    const csvPath = path.join(__dirname, `${keyword.replace(/ /g, '_')}part_2_scraped_articles.csv`);
+    const createCsvWriter = csvWriter.createObjectCsvWriter;
+    const csv = createCsvWriter({
+        path: csvPath,
+        header: [
+            { id: 'title', title: 'Title' },
+            { id: 'publishTime', title: 'Publish Time' },
+            { id: 'website', title: 'Website' },
+            { id: 'content', title: 'Content' }
+        ]
+    });
+
+    csv.writeRecords(articles)
+        .then(() => {
+            console.log(`Artikel telah berhasil disimpan ke ${keyword.replace(/ /g, '_')}_CNN-Indonesia_articles.csv`);
+        })
+        .catch(error => {
+            console.error('Error menulis CSV:', error);
+        });
 }
 
-// Function to save articles data to a CSV file
-function saveToCSV(data: any[], keyword: string) {
-    const sanitizedKeyword = keyword.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-    const csvFilePath = path.join(outputDir, `${sanitizedKeyword}_scraped_articles.csv`);
-    const headers = 'Title,Scrapping Date,Article Date,Author,Link,Content\n';
-    const rows = data.map(article => (
-        `"${article.Title}","${article.ScrappingDate}","${article.ArticleDate}","${article.Author}","${article.Link}","${article.Content.replace(/"/g, '""')}"\n`
-    )).join('');
-
-    fs.writeFileSync(csvFilePath, headers + rows, 'utf-8');
-    console.log(`Articles for keyword "${keyword}" saved to ${csvFilePath}`);
-
-    // Log the titles of the scraped articles
-    const logFilePath = path.join(outputDir, 'scraping_log.txt');
-    const logEntries = data.map(article => `Keyword: ${keyword}, Title: ${article.Title}`).join('\n') + '\n';
-    fs.appendFileSync(logFilePath, logEntries, 'utf-8');
-}
-
-// Start scraping for each keyword
-async function startScraping() {
-    for (const keyword of keywords) {
-        console.log(`Scraping articles for keyword: ${keyword}`);
-        await scrapeCNNArticles(keyword, maxPages);
-    }
-    console.log('Scraping completed.');
-}
-
-startScraping();
+// Menjalankan fungsi scraping
+scrapeArticlesForKeywords().then(() => {
+    console.log('Scraping selesai.');
+}).catch(error => {
+    console.error(error);
+});

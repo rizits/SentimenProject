@@ -1,0 +1,24 @@
+import pandas as pd
+import psycopg2
+
+bbc_data = pd.read_csv('D:/rizkygusman/LargeData/bbc-all.csv')
+unique_bbc_data = bbc_data.drop_duplicates(subset=['Link'])
+conn_params = {
+    "host": "kantor.yudis.dev",
+    "port": "22000",
+    "dbname": "postgres",
+    "user": "postgres",
+    "password": "semogaberhasil"
+}
+conn = psycopg2.connect(**conn_params)
+cur = conn.cursor()
+data_to_insert = unique_bbc_data[['Title', 'Scrapping Date', 'Article Date', 'Author', 'Link', 'Content']].values.tolist()
+insert_query = """
+    INSERT INTO articles (title, crawl_timestamp, article_date, author, url, content, platform_id)
+    VALUES (%s, %s, %s, %s, %s, %s, 13)
+"""
+for row in data_to_insert:
+    cur.execute(insert_query, row)
+conn.commit()
+cur.close()
+conn.close()

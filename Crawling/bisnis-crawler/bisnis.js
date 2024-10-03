@@ -9,8 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -53,7 +53,16 @@ var keywords = [
     //'Pasar Obligasi', 'Kinerja Obligasi', 'Tren Yield', 'Pengaruh Makroekonomi', 
     //'Kondisi Ekonomi', 'Suku Bunga', 'Kebijakan Moneter', 'Inflasi', 
     //'Pasar Keuangan', 'Volatilitas Pasar', 'Pergerakan Suku Bunga', 
-    'Imbal Hasil', 'Krisis Keuangan', 'Pemerintah Indonesia', 'Sentimen Investor'
+    // 'Imbal Hasil', 'Krisis Keuangan', 'Pemerintah Indonesia', 'Sentimen Investor'
+    // 'Lelang SUN', 'Lelang SBN', 'Lelang SBSN', 'Kebijakan fiskal', 'Defisit', 
+    // 'APBN', 'Defisit fiskal', 'Defisit APBN', 'Pembiayaan', 'Pembiayaan defisit', 
+    // 'Pembiayaan APBN', 'Pembiayaan utang', 'Pembiayaan infrastruktur', 'Risiko pasar', 
+    // 'Risiko utang',
+    'Risiko fiskal', 'Risiko likuiditas', 'Utang negara', 'Utang pemerintah',
+    'Harga SUN', 'Harga SBN', 'Transaksi SUN', 'Transaksi SBN', 'Penerbitan SUN',
+    'Penerbitan SBN', 'Penerbitan obligasi negara', 'Yield SUN', 'Yield SBN', 'Bunga utang',
+    'Bunga SUN', 'Bunga SBN', 'Rasio utang', 'Pertumbuhan ekonomi', 'Keseimbangan primer',
+    'Portofolio utang', 'Portofolio SUN'
 ];
 var maxPages = 10000;
 function scrapeArticlesForKeywords() {
@@ -199,11 +208,11 @@ function saveToCSV(articles, keyword) {
         console.log("Tidak ada artikel yang ditemukan untuk kata kunci \"".concat(keyword, "\"."));
         return;
     }
-    var directory = path.join(__dirname, 'scraped_articles');
+    var directory = path.join(__dirname, 'part_2_scraped_articles');
     if (!fs.existsSync(directory)) {
         fs.mkdirSync(directory, { recursive: true });
     }
-    var csvPath = path.join(directory, "".concat(keyword.replace(/ /g, '_'), "_scraped_articles.csv"));
+    var csvPath = path.join(directory, "".concat(keyword.replace(/ /g, '_'), "_bisnis.com_articles.csv"));
     var createCsvWriter = csvWriter.createObjectCsvWriter;
     var csv = createCsvWriter({
         path: csvPath,

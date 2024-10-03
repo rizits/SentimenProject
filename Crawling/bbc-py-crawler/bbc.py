@@ -36,16 +36,30 @@ KEYWORD = [
     # "safe haven demand",
     # "credit ratings",
     # "economic indicators",
-    "global trade",
-    "currency earnings",
-    "currency fluctuations",
-    "commodity prices",
-    "fiscal policy",
-    "debt levels",
-    "liquidity conditions",
-    "global supply chains",
-    "political events",
-    "investors sentiments",
+    # "global trade",
+    # "currency earnings",
+    # "currency fluctuations",
+    # "commodity prices",
+    # "fiscal policy",
+    # "debt levels",
+    # "liquidity conditions",
+    # "global supply chains",
+    # "political events",
+    # "investors sentiments",
+    # "Fed",
+    # "Federal Reserve",
+    # "Hawkish",
+    # "Dovish",
+    # "Spread",
+    # "Spread to UST", 
+    # "Spread to US Treasury",
+    # "Inverted", (error)
+    "Inverted curve",
+    "Normal curve", 
+    "Employment",
+    "Unemployment",
+    "Volatility",
+    "Primary balance",
 ]
 
 bbc_base_url = "https://www.bbc.com"
@@ -123,7 +137,7 @@ def scrape_article_content(url):
         return "Failed to retrieve the article", "Unknown"
 
 # Fungsi untuk menyimpan data ke CSV
-def save_to_csv(articles, keyword, filename_prefix="articles_with_content"):
+def save_to_csv(articles, keyword, filename_prefix="part_2_articles"):
     extracted_data = []
     current_date = datetime.now().strftime("%Y-%m-%d")
 
